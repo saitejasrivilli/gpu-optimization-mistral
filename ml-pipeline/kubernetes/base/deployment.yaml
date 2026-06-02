@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-pipeline-api
+  labels:
+    app: ml-pipeline-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ml-pipeline-api
+  template:
+    metadata:
+      labels:
+        app: ml-pipeline-api
+    spec:
+      containers:
+      - name: api
+        image: ml-pipeline-api:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: API_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: ml-pipeline-config
+              key: api.host
+        - name: API_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: ml-pipeline-config
+              key: api.port
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"

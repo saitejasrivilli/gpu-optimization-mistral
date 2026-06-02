@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package mini_spark.grpc;
+
+service WorkerService {
+  rpc ExecuteTask(ExecuteTaskRequest) returns (ExecuteTaskResponse);
+  rpc GetStatus(StatusRequest) returns (StatusResponse);
+  rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
+}
+
+message ExecuteTaskRequest {
+  string task_id = 1;
+  int32 stage_id = 2;
+  bytes function_bytes = 3;
+  repeated bytes args = 4;
+  repeated string dependencies = 5;
+}
+
+message ExecuteTaskResponse {
+  string task_id = 1;
+  bool success = 2;
+  bytes result = 3;
+  string error = 4;
+  double latency_ms = 5;
+}
+
+message StatusRequest {
+  string worker_id = 1;
+}
+
+message StatusResponse {
+  string worker_id = 1;
+  int32 total_tasks = 2;
+  int32 completed_tasks = 3;
+  int32 failed_tasks = 4;
+  double avg_latency_ms = 5;
+}
+
+message ShutdownRequest {}
+
+message ShutdownResponse {
+  bool success = 1;
+}

@@ -1,0 +1,5 @@
+redis>=5.0.0
+protobuf>=4.25.0
+
+[dev]
+pytest>=7.0.0

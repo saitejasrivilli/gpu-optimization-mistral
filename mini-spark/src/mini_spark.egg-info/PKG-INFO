@@ -1,0 +1,15 @@
+Metadata-Version: 2.4
+Name: mini-spark
+Version: 1.0.0
+Summary: Distributed batch processing engine
+Author: ML Engineer
+Requires-Python: >=3.8
+Requires-Dist: redis>=5.0.0
+Requires-Dist: protobuf>=4.25.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Dynamic: author
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary

@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mini-spark
+  labels:
+    app: mini-spark
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mini-spark
+  template:
+    metadata:
+      labels:
+        app: mini-spark
+    spec:
+      containers:
+      - name: worker
+        image: mini-spark:latest
+        env:
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: mini-spark-config
+              key: redis.host
+        - name: NUM_WORKERS
+          valueFrom:
+            configMapKeyRef:
+              name: mini-spark-config
+              key: num.workers
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
