@@ -1,0 +1,102 @@
+\documentclass[10pt, letterpaper]{article}
+\usepackage[top=0.18in, bottom=0.15in, left=0.5in, right=0.5in]{geometry}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, urlcolor=blue, pdfborder={0 0 0}}
+\pagestyle{empty}
+
+\newcommand{\mysection}[1]{%
+  \vspace{10pt}%
+  {\noindent\large\bfseries #1}%
+  \vspace{4pt}{\hrule}%
+  \vspace{6pt}%
+}
+
+\newcommand{\resumeItem}[1]{\item\small{#1}}
+
+\setlength{\parindent}{0pt}
+\setlength{\itemsep}{0pt}
+\setlength{\parsep}{0pt}
+\setlength{\topsep}{0pt}
+\setlength{\partopsep}{0pt}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE\textbf{SAI TEJA SRIVILLIBHUTTURU}} \\[2pt]
+  \small
+  saiteja.srivilli@gmail.com \quad +1 (682) 234-3567 \quad
+  \href{https://github.com/saitejasrivilli}{github.com/saitejasrivilli} \quad
+  \href{https://linkedin.com/in/saitejasrivilli}{linkedin.com/in/saitejasrivilli}
+\end{center}
+\vspace{-3mm}
+
+\mysection{Skills}
+\small
+\noindent\textbf{LLM \& GenAI:} PyTorch, HuggingFace Transformers, fine-tuning (LoRA/QLoRA, SFT), RLHF/DPO, instruction tuning, vLLM, model serving, evaluation metrics \\
+\noindent\textbf{NLP \& Language Understanding:} Intent classification, entity extraction, semantic understanding, multilingual NLP, machine translation, prompt engineering, RAG (Pinecone, ChromaDB) \\
+\noindent\textbf{Multi-Agent Systems:} LangGraph state machines, multi-agent orchestration, tool use, ReAct reasoning, evaluation frameworks (RAGAS), FastAPI backend deployment
+
+\vspace{-3mm}
+\mysection{Professional Experience}
+
+\noindent\textbf{University of Texas at Arlington} \hfill Aug 2024 -- Present \\
+\textit{LLM Engineer} \hfill Texas, US
+\begin{itemize}
+  \resumeItem{Designed and productionized end-to-end \textbf{LLM-based} research assistant using \textbf{RAG} pipeline indexing 1,000+ academic documents with \textbf{Pinecone}, achieving \textbf{\textasciitilde 85\%} retrieval relevance on 50-query benchmark; presented architecture to 8-person product team and executives.}
+  \resumeItem{Reduced hallucinations \textbf{25\%} (grounding score 0.73 -> 0.91) by implementing \textbf{retrieval-aware prompt engineering}, few-shot experimentation, and structured system prompts; coordinated with research team on evaluation methodology.}
+  \resumeItem{Improved long-context reasoning \textbf{20\%} through \textbf{token-aware chunking} and context window management within 4K token limits; benchmarked performance across 3 context lengths (512, 1K, 4K tokens) and documented findings in technical report.}
+  \resumeItem{Deployed scalable FastAPI REST APIs with async streaming and Redis caching, handling \textbf{50+ req/s} throughput with \textbf{sub-200ms P95} latency; collaborated with DevOps on production monitoring and auto-scaling policies.}
+\end{itemize}
+
+\noindent\textbf{DentalScan} \hfill Dec 2025 -- Feb 2025 \\
+\textit{Machine Learning Engineer Intern} \hfill Remote, US
+\begin{itemize}
+  \resumeItem{Strengthened AI-driven diagnostic workflows by implementing policy-based guardrails, structured output validation, and escalation logic using rule engines across 5 diagnostic tasks; reduced unsafe inference exposure \textbf{40\%} (0.8\% -> 0.48\% false positive rate); briefed 3 clinical teams on safety improvements.}
+  \resumeItem{Programmed automated evaluation pipelines with metric-based promotion gates (accuracy, precision, F1, recall); prevented \textbf{30\%} of high-risk model regressions from reaching production across 6 failure categories; collaborated with QA team to define regression detection thresholds.}
+  \resumeItem{Accelerated retraining cycles \textbf{25\%} (14 days -> 10.5 days) via AWS S3- and Lambda-based preprocessing pipelines with version-controlled datasets and automated drift detection; documented pipeline architecture for team handoff.}
+  \resumeItem{Improved deployment reliability by containerizing training and inference workflows with Docker and SageMaker; reduced manual operational effort \textbf{35\%} and achieved \textbf{99.2\% uptime} over 2-month period.}
+\end{itemize}
+
+\noindent\textbf{Tata Consultancy Services} \hfill Jun 2019 -- May 2023 \\
+\textit{Software Engineer} \hfill Chennai, India
+\begin{itemize}
+  \resumeItem{Refactored monolithic Spring Boot application into 8 scalable RESTful microservices, reducing system latency \textbf{40\%} and improving service modularity.}
+  \resumeItem{Increased backend throughput \textbf{30\%} and maintained \textbf{99\%} uptime by optimizing PostgreSQL queries and implementing structured monitoring.}
+  \resumeItem{Accelerated release cycles \textbf{30\%} by automating CI/CD pipelines using Git and Jenkins, expanding test coverage to \textbf{85\%}.}
+\end{itemize}
+
+\vspace{-3mm}
+\mysection{Projects}
+
+\noindent\textbf{Multi-Agent Research Assistant with NLP Tasks} \hfill \href{https://github.com/saitejasrivilli/multi-agent-research-mcp}{GitHub}
+\begin{itemize}
+  \resumeItem{Designed and deployed \textbf{intent classification} system for e-commerce conversations: 5 intent classes (search, purchase, review, complaint, inquiry) with \textbf{100\%} accuracy; collaborated with product and support teams to define intent taxonomy.}
+  \resumeItem{Programmed \textbf{entity extraction} for 7 e-commerce entity types (product, price, brand, color, size, location, quantity); integrated with \textbf{multi-agent workflow} for \textbf{semantic understanding}.}
+  \resumeItem{Orchestrated \textbf{LangGraph} state machine (Researcher -> Critic -> Synthesizer -> Evaluator) with \textbf{ChromaDB} vector retrieval and \textbf{RAGAS} evaluation (relevancy, faithfulness, coherence), achieving \textbf{0.9541 overall} evaluation score.}
+\end{itemize}
+
+\noindent\textbf{LLM Fine-Tuning \& Alignment: Production System} \hfill \href{https://github.com/saitejasrivilli/LLM_FineTuning_SFT_Production}{GitHub} | \href{https://huggingface.co/SaiTejaSrivilli/qwen-7b-sft-merged}{HuggingFace}
+\begin{itemize}
+  \resumeItem{\textbf{Supervised fine-tuning (SFT)} of Qwen-7B with \textbf{LoRA/QLoRA}: \textbf{BERTScore improvement 0.780 -> 0.855} (+9.6\%) on \textbf{instruction-following} task with only \textbf{0.066\%} trainable parameters.}
+  \resumeItem{Multi-GPU distributed training (3x A30) using torchrun and PEFT; deployed model to HuggingFace Hub with production-grade evaluation metrics and trade-off analysis.}
+\end{itemize}
+
+\noindent\textbf{Verifiable Alignment: DPO/GRPO Post-Training Pipeline} \hfill \href{https://github.com/saitejasrivilli/verifiable-alignment}{GitHub}
+\begin{itemize}
+  \resumeItem{Implemented full post-training pipeline: \textbf{DPO} (direct preference optimization) -> \textbf{GRPO} (group relative policy optimization with verifiable rewards) -> PRM (process reward model) on math reasoning.}
+  \resumeItem{Achieved \textbf{12.4\% -> 30.5\% MATH accuracy} on Mistral-7B base model via \textbf{alignment} and process-level reward verification using symbolic execution (sympy verifier).}
+  \resumeItem{Implemented DeepSpeed ZeRO-2 for efficient training and \textbf{vLLM} for \textbf{inference optimization}; tracked experiments via Weights \& Biases with detailed metrics.}
+\end{itemize}
+
+\noindent\textbf{LLM Brand Safety \& Guardrails System} \hfill \href{https://huggingface.co/spaces/SaiTejaSrivilli/brand-safety-guardrails}{Live Demo}
+\begin{itemize}
+  \resumeItem{Crafted production-style multi-modal moderation using \textbf{fine-tuned BERT} and CLIP (ViT-B/32) for zero-shot image safety detection, achieving \textbf{94\% precision} on unsafe content; generating policy-driven verdicts (APPROVE/REVIEW/REJECT).}
+  \resumeItem{Combined text and image risk signals with rule-based escalation logic and explainable probability outputs on Gradio, reducing false positives \textbf{28\%} vs single-modality baseline.}
+\end{itemize}
+
+\vspace{-3mm}
+\mysection{Education}
+\noindent\textbf{University of Texas at Arlington} -- Master of Science in Computer Science \hfill Aug 2023 -- May 2025 \\
+\noindent\textbf{Andhra University} -- Bachelor of Technology in Computer Science \hfill Jun 2015 -- Apr 2019
+
+\end{document}
