@@ -1,0 +1,94 @@
+\documentclass[10pt, letterpaper]{article}
+\usepackage[top=0.18in, bottom=0.15in, left=0.5in, right=0.5in]{geometry}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, urlcolor=blue, pdfborder={0 0 0}}
+\pagestyle{empty}
+
+\newcommand{\mysection}[1]{%
+  \vspace{10pt}%
+  {\noindent\large\bfseries #1}%
+  \vspace{4pt}{\hrule}%
+  \vspace{6pt}%
+}
+
+\newcommand{\resumeItem}[1]{\item\small{#1}}
+
+\setlength{\parindent}{0pt}
+\setlength{\itemsep}{0pt}
+\setlength{\parsep}{0pt}
+\setlength{\topsep}{0pt}
+\setlength{\partopsep}{0pt}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE\textbf{SAI TEJA SRIVILLIBHUTTURU}} \\[2pt]
+  \small
+  saiteja.srivilli@gmail.com \quad +1 (682) 234-3567 \quad
+  \href{https://github.com/saitejasrivilli}{github.com/saitejasrivilli} \quad
+  \href{https://linkedin.com/in/saitejasrivilli}{linkedin.com/in/saitejasrivilli}
+\end{center}
+\vspace{-3mm}
+
+\mysection{Skills}
+\small
+\noindent\textbf{ML Models \& Algorithms:} Python, PyTorch, \textbf{supervised learning} (XGBoost, LightGBM, CatBoost, neural networks), \textbf{unsupervised learning} (SVD, collaborative filtering), Learning-to-Rank (TF-Ranking), GBDT, optimization methods (LambdaLoss, gradient descent) \\
+\noindent\textbf{Statistical Modeling \& Evaluation:} Bayesian inference, AUC/LogLoss/Gini metrics, NDCG optimization, model selection, hyperparameter tuning, A/B testing, statistical significance testing \\
+\noindent\textbf{Production ML:} Real-time inference (\textless{}1ms latency), feature engineering, PySpark pipelines, model evaluation frameworks, AWS (S3, Lambda, SageMaker), Docker, Kubernetes
+
+\vspace{-3mm}
+\mysection{Professional Experience}
+
+\noindent\textbf{University of Texas at Arlington} \hfill Aug 2024 -- Present \\
+\textit{Machine Learning Engineer} \hfill Texas, US
+\begin{itemize}
+  \resumeItem{Engineered \textbf{large-scale ML} system for information retrieval over 1K+ document corpus, achieving \textbf{92\% accuracy} with \textbf{sub-100ms} query latency on AWS; communicated architecture decisions with 5-person team and presented optimization results to stakeholders.}
+  \resumeItem{Constructed \textbf{real-time ML data pipeline} in PyTorch on distributed compute; trained and optimized path prediction models, cutting end-to-end routing latency \textbf{35\%}; collaborated with infrastructure team to resolve compute bottlenecks.}
+  \resumeItem{Formulated high-throughput \textbf{model inference} serving layer with RESTful APIs in Python; scaled to 50K+ daily requests and reduced serving latency \textbf{25\%}.}
+  \resumeItem{Mentored 2 junior ML engineers on supervised learning model selection, hyperparameter tuning, and statistical evaluation; provided code reviews and guided model deployment best practices.}
+\end{itemize}
+
+\noindent\textbf{DentalScan} \hfill Dec 2025 -- Feb 2026 \\
+\textit{Machine Learning Engineer Intern} \hfill Remote, US
+\begin{itemize}
+  \resumeItem{Strengthened AI-driven diagnostic workflows by implementing policy-based guardrails, structured output validation, and escalation logic using rule engines across 5 diagnostic tasks; reduced unsafe inference exposure \textbf{40\%} (0.8\% -> 0.48\% false positive rate); briefed 3 clinical teams on safety improvements.}
+  \resumeItem{Programmed automated evaluation pipelines with metric-based promotion gates (accuracy, precision, F1, recall); prevented \textbf{30\%} of high-risk model regressions from reaching production across 6 failure categories; collaborated with QA team to define regression detection thresholds.}
+  \resumeItem{Accelerated retraining cycles \textbf{25\%} (14 days -> 10.5 days) via AWS S3- and Lambda-based preprocessing pipelines with version-controlled datasets and automated drift detection; documented pipeline architecture for team handoff.}
+\end{itemize}
+
+\noindent\textbf{Tata Consultancy Services} \hfill Jun 2019 -- May 2023 \\
+\textit{Software Development Engineer -- Backend \& Infrastructure} \hfill Chennai, India
+\begin{itemize}
+  \resumeItem{Led and scaled microservices backend exposing high-throughput RESTful APIs processing millions of records; slashed latency \textbf{45\%} via MySQL optimization and Redis caching; coordinated with 3 teams on API contract changes.}
+  \resumeItem{Established real-time monitoring service tracking microservice health; cut incident response time \textbf{40\%} via Prometheus/Grafana dashboards; liaised with oncall team to gather monitoring requirements.}
+  \resumeItem{Automated deployment workflows using CI/CD pipelines; slashed release cycle time \textbf{30\%} and enforced configuration standards; presented deployment best practices to engineering team.}
+\end{itemize}
+
+\vspace{-3mm}
+\mysection{Projects}
+
+\noindent\textbf{Real-Time Bidding (RTB) System: GBDT CTR Predictors} \hfill \href{https://github.com/saitejasrivilli/rtb-bidding-system}{GitHub}
+\begin{itemize}
+  \resumeItem{Developed production-grade \textbf{CTR prediction} models comparing \textbf{XGBoost}, \textbf{LightGBM}, and \textbf{CatBoost} on synthetic RTB data: \textbf{XGBoost AUC 0.5662}, \textbf{LightGBM LogLoss 0.2237} (best), \textbf{CatBoost 0.5494} -- all with \textbf{sub-0.001ms} \textbf{inference latency} per sample.}
+  \resumeItem{Spearheaded comprehensive \textbf{GBDT} benchmark suite measuring AUC, LogLoss, Gini, training time, and \textbf{inference latency}; generated production-ready model comparison enabling real-time serving optimization.}
+  \resumeItem{Orchestrated complete RTB engine with second-price auctions, eCPM \textbf{ranking}, token-bucket budget pacing, and \textbf{\textless{}100ms} latency achieving \textbf{2000+ QPS} throughput.}
+\end{itemize}
+
+\noindent\textbf{Sponsored Search Ranking: Learning-to-Rank System} \hfill \href{https://github.com/saitejasrivilli/sponsored-search-ranking}{GitHub}
+\begin{itemize}
+  \resumeItem{Engineered two-stage \textbf{ranking} pipeline: FAISS HNSW candidate retrieval (\textbf{\textasciitilde 3ms}) + \textbf{TF-Ranking} reranker with \textbf{LambdaLoss} for listwise NDCG optimization and IPS position bias correction, improving ranking quality \textbf{18\%} vs baseline.}
+  \resumeItem{Established PySpark \textbf{feature engineering} pipeline with Airflow DAG orchestration for large-scale feature computation; served via FastAPI achieving \textbf{\textless{}50ms} end-to-end latency on 1M+ queries daily.}
+\end{itemize}
+
+\noindent\textbf{Amazon Product Recommender System: SVD Collaborative Filtering} \hfill \href{https://github.com/saitejasrivilli/amazon-product-recommender}{GitHub}
+\begin{itemize}
+  \resumeItem{Developed large-scale product recommendation system using \textbf{SVD-based collaborative filtering} over 1.7M+ user-item interactions, achieving \textbf{0.78 NDCG@10} on holdout test set; exposed \textbf{inference} via FastAPI with PostgreSQL backend.}
+  \resumeItem{Created Kafka producer/consumer pipeline to stream real-time user interactions and automated model retraining on new batches, reducing stale recommendations \textbf{40\%}.}
+  \resumeItem{Launched as production-grade serving endpoint with \textbf{sub-100ms} recommendation latency, supporting \textbf{10K+ daily active users}; articulated system design tradeoffs in technical design review.}
+\end{itemize}
+\vspace{-3mm}
+\mysection{Education}
+\noindent\textbf{University of Texas at Arlington} -- Master of Science in Computer Science \hfill Aug 2023 -- May 2025 \\
+\noindent\textbf{Andhra University} -- Bachelor of Technology in Computer Science \hfill Jun 2015 -- Apr 2019
+
+\end{document}
