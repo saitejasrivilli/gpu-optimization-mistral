@@ -316,6 +316,94 @@
             padding: 4px 8px;
             border-radius: 4px;
         }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .file-input-wrapper {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            background: var(--bg);
+        }
+
+        .file-input-wrapper.dragover {
+            background: rgba(37, 99, 235, 0.05);
+            border-color: var(--primary);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-list {
+            list-style: none;
+            margin: 20px 0;
+        }
+
+        .file-list li {
+            padding: 10px;
+            background: var(--bg);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .remove-file {
+            background: none;
+            border: none;
+            color: var(--error);
+            cursor: pointer;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -337,6 +425,24 @@
             </div>
         </div>
 
+        <!-- Batch Upload Modal -->
+        <div id="uploadModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📤 Batch Upload Documents</h2>
+                    <button class="close-btn" onclick="closeBatchUpload()">×</button>
+                </div>
+                <div class="file-input-wrapper" id="dropZone" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                    <p>Drag files here or <a href="#" onclick="document.getElementById('fileInput').click(); return false;" style="color: var(--primary);">click to select</a></p>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">PNG, JPG, PDF supported</p>
+                    <input type="file" id="fileInput" multiple accept="image/png,image/jpeg,application/pdf" onchange="handleFileSelect(event)" />
+                </div>
+                <ul class="file-list" id="fileList"></ul>
+                <button onclick="uploadFiles()" style="width: 100%; padding: 12px;">Upload Documents</button>
+                <div id="uploadStatus"></div>
+            </div>
+        </div>
+
         <div id="responseSection" class="hidden response">
             <div id="loading" class="loading">
                 <div class="spinner"></div>
@@ -344,6 +450,12 @@
             </div>
 
             <div id="answerContent" class="hidden">
+                <!-- SQL Query Display -->
+                <div id="sqlSection" class="answer-card hidden">
+                    <h3 style="margin-bottom: 12px;">🔧 Generated SQL</h3>
+                    <pre id="sqlQuery" style="background: var(--bg); padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 12px; line-height: 1.5;"></pre>
+                </div>
+
                 <div class="answer-card">
                     <div class="answer-text" id="answerText"></div>
 
@@ -363,6 +475,12 @@
                     </div>
                 </div>
 
+                <!-- Results Table -->
+                <div id="tableSection" class="answer-card hidden">
+                    <h3 style="margin-bottom: 12px;">📊 Results Table</h3>
+                    <div id="resultsTable" style="overflow-x: auto;"></div>
+                </div>
+
                 <div class="sources">
                     <h3>📄 Sources</h3>
                     <div id="sourcesList"></div>
@@ -373,12 +491,18 @@
         </div>
 
         <div class="footer">
-            <p>Fleet Document Management System</p>
+            <p>FleetQA - Fleet Document Management System</p>
             <div class="powered-by">
                 <span class="service-badge">🧠 Featherless AI</span>
                 <span class="service-badge">🔍 Tavily Search</span>
                 <span class="service-badge">✓ Zero Hallucination</span>
             </div>
+            <p style="margin-top: 20px; font-size: 13px;">
+                <a href="/dashboard" style="color: var(--primary); text-decoration: none; margin: 0 10px;">📊 Dashboard</a>
+                <a href="/database" style="color: var(--primary); text-decoration: none; margin: 0 10px;">🗄️ Database</a>
+                <a href="/architecture" style="color: var(--primary); text-decoration: none; margin: 0 10px;">🏗️ How It Works</a>
+                <a href="#" onclick="showBatchUpload()" style="color: var(--primary); text-decoration: none; margin: 0 10px;">📤 Batch Upload</a>
+            </p>
         </div>
     </div>
 
@@ -413,6 +537,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': 'Bearer demo-key-12345',
                     },
                     body: JSON.stringify({
                         query: query,
@@ -441,7 +566,7 @@
             answerContent.classList.remove('hidden');
             errorDiv.classList.add('hidden');
 
-            document.getElementById('answerText').textContent = data.answer;
+            document.getElementById('answerText').innerHTML = data.answer.replace(/\n/g, '<br>');
             document.getElementById('confidence').textContent = Math.round(data.confidence * 100) + '%';
             document.getElementById('sourceCount').textContent = (data.sources || []).length;
 
@@ -456,14 +581,64 @@
                 badge.classList.add('warning');
             }
 
+            // Show SQL query if available
+            if (data.sql_query) {
+                document.getElementById('sqlSection').classList.remove('hidden');
+                document.getElementById('sqlQuery').textContent = data.sql_query;
+            } else {
+                document.getElementById('sqlSection').classList.add('hidden');
+            }
+
+            // Show results table if available
+            if (data.sql_results && data.sql_results.length > 0) {
+                document.getElementById('tableSection').classList.remove('hidden');
+                displayResultsTable(data.sql_results);
+            } else {
+                document.getElementById('tableSection').classList.add('hidden');
+            }
+
             const sourcesList = document.getElementById('sourcesList');
             if (data.sources && data.sources.length > 0) {
                 sourcesList.innerHTML = data.sources
-                    .map(src => `<div class="source-item">📎 ${src}</div>`)
+                    .map(src => {
+                        if (typeof src === 'string') {
+                            return `<div class="source-item">📎 ${src}</div>`;
+                        } else {
+                            return `<div class="source-item">📎 ${src.source || JSON.stringify(src)}</div>`;
+                        }
+                    })
                     .join('');
             } else {
                 sourcesList.innerHTML = '<div class="source-item">No specific sources cited</div>';
             }
+        }
+
+        function displayResultsTable(results) {
+            if (!results || results.length === 0) return;
+
+            const columns = Object.keys(results[0]);
+            let html = '<table style="width: 100%; border-collapse: collapse; font-size: 13px;">';
+
+            // Header
+            html += '<thead><tr style="background: var(--bg); border-bottom: 2px solid var(--border);">';
+            columns.forEach(col => {
+                html += `<th style="padding: 12px; text-align: left; font-weight: 600;">${col}</th>`;
+            });
+            html += '</tr></thead>';
+
+            // Body
+            html += '<tbody>';
+            results.forEach((row, idx) => {
+                const bgColor = idx % 2 === 0 ? 'transparent' : 'var(--bg)';
+                html += `<tr style="background: ${bgColor}; border-bottom: 1px solid var(--border);">`;
+                columns.forEach(col => {
+                    html += `<td style="padding: 12px;">${row[col] !== null && row[col] !== undefined ? row[col] : '—'}</td>`;
+                });
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+
+            document.getElementById('resultsTable').innerHTML = html;
         }
 
         function showError(message) {
@@ -482,6 +657,104 @@
         document.getElementById('queryInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') submitQuery();
         });
+
+        // Batch Upload Functions
+        let selectedFiles = [];
+
+        function showBatchUpload() {
+            document.getElementById('uploadModal').classList.add('active');
+        }
+
+        function closeBatchUpload() {
+            document.getElementById('uploadModal').classList.remove('active');
+            selectedFiles = [];
+            document.getElementById('fileList').innerHTML = '';
+            document.getElementById('uploadStatus').innerHTML = '';
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            document.getElementById('dropZone').classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            document.getElementById('dropZone').classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            document.getElementById('dropZone').classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        }
+
+        function handleFileSelect(e) {
+            handleFiles(e.target.files);
+        }
+
+        function handleFiles(files) {
+            selectedFiles = Array.from(files);
+            updateFileList();
+        }
+
+        function updateFileList() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = selectedFiles
+                .map((file, idx) => `
+                    <li>
+                        <span>${file.name} (${(file.size / 1024).toFixed(1)} KB)</span>
+                        <button class="remove-file" onclick="removeFile(${idx})">✕</button>
+                    </li>
+                `)
+                .join('');
+        }
+
+        function removeFile(idx) {
+            selectedFiles.splice(idx, 1);
+            updateFileList();
+        }
+
+        async function uploadFiles() {
+            if (selectedFiles.length === 0) {
+                alert('Please select files to upload');
+                return;
+            }
+
+            const uploadStatus = document.getElementById('uploadStatus');
+            uploadStatus.innerHTML = '<p style="margin-top: 10px; color: var(--text-muted);">Uploading...</p>';
+
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+
+            try {
+                const response = await fetch(`${API_BASE}/upload`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer demo-key-12345'
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    uploadStatus.innerHTML = `
+                        <div style="margin-top: 10px; padding: 12px; background: rgba(16, 185, 129, 0.1); color: var(--success); border-radius: 6px; font-size: 13px;">
+                            ✓ Uploaded ${data.processed}/${data.total} documents successfully!
+                        </div>
+                    `;
+                    setTimeout(() => {
+                        closeBatchUpload();
+                    }, 2000);
+                } else {
+                    uploadStatus.innerHTML = `<div style="margin-top: 10px; color: var(--error); font-size: 13px;">Error: ${data.detail || 'Upload failed'}</div>`;
+                }
+            } catch (err) {
+                uploadStatus.innerHTML = `<div style="margin-top: 10px; color: var(--error); font-size: 13px;">Error: ${err.message}</div>`;
+            }
+        }
     </script>
 </body>
 </html>

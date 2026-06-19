@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Browser</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --bg: #f9fafb;
+            --surface: #ffffff;
+            --border: #e5e7eb;
+            --text: #1f2937;
+            --text-muted: #6b7280;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        p {
+            color: var(--text-muted);
+        }
+
+        .tables-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .table-button {
+            padding: 16px;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .table-button:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+        }
+
+        .table-button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .content {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .content h2 {
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            background: var(--bg);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border);
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tr:hover {
+            background: var(--bg);
+        }
+
+        .row-count {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin-top: 12px;
+        }
+
+        .schema-info {
+            background: var(--bg);
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 24px;
+        }
+
+        .schema-table {
+            width: 100%;
+            font-size: 13px;
+            margin-top: 12px;
+        }
+
+        .schema-table th,
+        .schema-table td {
+            padding: 8px;
+            text-align: left;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 12px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="/" class="back-link">← Back to Query</a>
+            <h1>🗄️ Database Browser</h1>
+            <p>Browse fleet database tables and schema</p>
+        </header>
+
+        <div class="tables-grid" id="tablesList"></div>
+
+        <div class="content">
+            <div id="tableContent">
+                <div class="loading">Select a table to view data</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let allTables = [];
+        let allSchema = {};
+
+        async function loadTables() {
+            try {
+                const response = await fetch(`${API_BASE}/tables`);
+                const data = await response.json();
+                allTables = data.tables;
+                renderTableButtons();
+            } catch (err) {
+                document.getElementById('tablesList').innerHTML = `
+                    <div class="error">Error loading tables: ${err.message}</div>
+                `;
+            }
+        }
+
+        async function loadSchema() {
+            try {
+                const response = await fetch(`${API_BASE}/schema`);
+                allSchema = await response.json();
+            } catch (err) {
+                console.error('Error loading schema:', err);
+            }
+        }
+
+        function renderTableButtons() {
+            const grid = document.getElementById('tablesList');
+            grid.innerHTML = allTables
+                .map(table => `
+                    <button class="table-button" onclick="viewTable('${table}')">
+                        📊 ${table}
+                    </button>
+                `)
+                .join('');
+        }
+
+        async function viewTable(tableName) {
+            const content = document.getElementById('tableContent');
+            content.innerHTML = '<div class="loading">Loading...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/table/${tableName}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    content.innerHTML = `<div class="error">${data.error}</div>`;
+                    return;
+                }
+
+                let html = `<h2>${tableName} (${data.count} rows)</h2>`;
+
+                if (data.rows.length === 0) {
+                    html += '<p>No data in this table</p>';
+                } else {
+                    html += '<table><thead><tr>';
+                    data.columns.forEach(col => {
+                        html += `<th>${col}</th>`;
+                    });
+                    html += '</tr></thead><tbody>';
+
+                    data.rows.forEach(row => {
+                        html += '<tr>';
+                        data.columns.forEach(col => {
+                            const value = row[col];
+                            html += `<td>${value !== null && value !== undefined ? value : '—'}</td>`;
+                        });
+                        html += '</tr>';
+                    });
+
+                    html += '</tbody></table>';
+                    html += `<div class="row-count">Showing ${data.count} rows</div>`;
+                }
+
+                // Add schema info
+                if (allSchema[tableName]) {
+                    html += '<div class="schema-info">';
+                    html += '<strong>Schema:</strong>';
+                    html += '<table class="schema-table"><tr><th>Column</th><th>Type</th></tr>';
+                    allSchema[tableName].forEach(col => {
+                        html += `<tr><td>${col.name}</td><td>${col.type}</td></tr>`;
+                    });
+                    html += '</table></div>';
+                }
+
+                content.innerHTML = html;
+            } catch (err) {
+                content.innerHTML = `<div class="error">Error loading table: ${err.message}</div>`;
+            }
+        }
+
+        // Initialize
+        window.addEventListener('load', async () => {
+            await loadTables();
+            await loadSchema();
+        });
+    </script>
+
+    <div style="text-align: center; margin-top: 60px; padding-top: 20px; padding-bottom: 40px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted);">
+        <p style="margin-bottom: 12px;">FleetQA - Fleet Document Management System</p>
+        <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+            <a href="/" style="color: var(--primary); text-decoration: none; margin: 0 10px;">🏠 Home</a>
+            <a href="/dashboard" style="color: var(--primary); text-decoration: none; margin: 0 10px;">📊 Dashboard</a>
+            <a href="/architecture" style="color: var(--primary); text-decoration: none; margin: 0 10px;">🏗️ How It Works</a>
+        </div>
+    </div>
+</body>
+</html>
