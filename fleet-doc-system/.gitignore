@@ -1,0 +1,104 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Data & Models
+data/raw/*
+data/synthetic/*
+data/processed/*
+models/ocr/*
+models/embedding/*
+models/reranker/*
+!data/.gitkeep
+!models/.gitkeep
+
+# Logs
+logs/
+*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+pgdata/
+
+# Temporary
+tmp/
+temp/
+*.tmp
+.ipynb_checkpoints/
+
+# Docker
+.dockerignore
+
+# Unrelated files (PDFs, images, documents, spreadsheets)
+*.pdf
+*.xlsx
+*.xls
+*.csv
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.doc
+*.docx
+README.md
+00-START-HERE.md
+*_Project*.xlsx
+*-logistics.pdf
+*_profiling.png
+*_comparison.png
+*_analysis.png
+*_accuracy*.png
+*_dashboard.png
+*_cost*.png
+*_speedup*.png
+*.ipynb
+_interview*.pdf
+_salary*.pdf
