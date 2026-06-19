@@ -19,6 +19,7 @@ from src.layer5_verification.grounding import GroundingVerifier
 from src.models import VerifiedResponse
 from src.layer1_ingestion.batch_processor import BatchIngestionProcessor
 from src.metrics import metrics
+from src.layer6_api.query_cache import QueryCache
 
 logger = get_logger(__name__)
 
@@ -27,6 +28,9 @@ limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(title="Fleet Document System", version="1.0")
 app.state.limiter = limiter
+
+# Query caching (1 hour TTL)
+query_cache = QueryCache(ttl_seconds=3600)
 
 # Initialize components
 tavily_retriever = TavilyRetriever()
@@ -166,6 +170,14 @@ async def query_documents(request: Request, query: QueryRequest, token: str = De
     query_id = None
 
     try:
+        # Check cache first (skip expensive computation if hit)
+        cached = query_cache.get(query.query)
+        if cached:
+            response_time_ms = (time.time() - start_time) * 1000
+            logger.info("query_cache_hit", response_time_ms=response_time_ms)
+            cached["response_time_ms"] = response_time_ms
+            return QueryResponse(**cached)
+
         # Step 1: Route query
         routed = await query_router.route_query(query.query)
         logger.info("query_routed", intent=routed.intent)
@@ -316,7 +328,7 @@ async def query_documents(request: Request, query: QueryRequest, token: str = De
             # No SQL results - show answer (will be from Tavily)
             answer_with_table = verified.answer
 
-        return QueryResponse(
+        response = QueryResponse(
             answer=answer_with_table,
             is_grounded=is_grounded,
             confidence=verified.confidence,
@@ -326,6 +338,15 @@ async def query_documents(request: Request, query: QueryRequest, token: str = De
             sql_query=sql,  # Return generated SQL regardless of execution
             sql_results=sql_results_formatted if sql_success else None,  # Only return results if executed
         )
+
+        # Cache successful responses
+        try:
+            query_cache.set(query.query, response.dict())
+            logger.info("query_cached", query=query.query[:50])
+        except Exception as cache_err:
+            logger.warning("cache_store_failed", error=str(cache_err))
+
+        return response
 
     except HTTPException:
         raise
@@ -491,6 +512,12 @@ async def get_schema():
 async def stats():
     """Dashboard statistics."""
     return metrics.get_stats()
+
+
+@app.get("/cache-stats")
+async def cache_stats():
+    """Query cache statistics."""
+    return query_cache.stats()
 
 
 @app.get("/ab-recommendations")
