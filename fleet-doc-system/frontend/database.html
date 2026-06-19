@@ -227,6 +227,19 @@
                 <div class="loading">Select a table to view data</div>
             </div>
         </div>
+
+        <div class="content" style="margin-top: 40px;">
+            <h2>🔍 SQL Query Executor</h2>
+            <p style="color: var(--text-muted); margin-bottom: 16px;">Run custom SELECT queries on the database</p>
+
+            <textarea id="sqlInput"
+                placeholder="SELECT * FROM trucks WHERE truck_id = 'T-084'"
+                style="width: 100%; min-height: 100px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-family: monospace; font-size: 13px; margin-bottom: 12px;">SELECT * FROM trucks LIMIT 5;</textarea>
+
+            <button onclick="executeSql()" style="padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Execute Query</button>
+
+            <div id="sqlResults" style="margin-top: 20px;"></div>
+        </div>
     </div>
 
     <script>
@@ -320,6 +333,75 @@
                 content.innerHTML = `<div class="error">Error loading table: ${err.message}</div>`;
             }
         }
+
+        async function executeSql() {
+            const sql = document.getElementById('sqlInput').value.trim();
+            const resultsDiv = document.getElementById('sqlResults');
+
+            if (!sql) {
+                resultsDiv.innerHTML = '<div class="error">Enter a SQL query</div>';
+                return;
+            }
+
+            try {
+                resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Executing...</p></div>';
+
+                const response = await fetch('/execute-sql', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer demo-key-12345'
+                    },
+                    body: JSON.stringify({ sql })
+                });
+
+                const data = await response.json();
+
+                if (!data.success || data.error) {
+                    resultsDiv.innerHTML = `<div class="error">Error: ${data.error}</div>`;
+                    return;
+                }
+
+                let html = `<h3>Results (${data.count} rows)</h3>`;
+
+                if (data.rows.length === 0) {
+                    html += '<p>No results</p>';
+                } else {
+                    html += '<table><thead><tr>';
+                    data.columns.forEach(col => {
+                        html += `<th>${col}</th>`;
+                    });
+                    html += '</tr></thead><tbody>';
+
+                    data.rows.forEach(row => {
+                        html += '<tr>';
+                        data.columns.forEach(col => {
+                            const value = row[col];
+                            html += `<td>${value !== null && value !== undefined ? value : '—'}</td>`;
+                        });
+                        html += '</tr>';
+                    });
+
+                    html += '</tbody></table>';
+                }
+
+                resultsDiv.innerHTML = html;
+            } catch (err) {
+                resultsDiv.innerHTML = `<div class="error">Error: ${err.message}</div>`;
+            }
+        }
+
+        // Allow Enter key to execute SQL
+        document.addEventListener('DOMContentLoaded', () => {
+            const sqlInput = document.getElementById('sqlInput');
+            if (sqlInput) {
+                sqlInput.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey && e.key === 'Enter') {
+                        executeSql();
+                    }
+                });
+            }
+        });
 
         // Initialize
         window.addEventListener('load', async () => {

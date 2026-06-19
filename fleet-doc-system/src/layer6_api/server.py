@@ -508,6 +508,37 @@ async def get_schema():
         return {"error": str(e)}
 
 
+class SQLRequest(BaseModel):
+    """SQL execution request."""
+    sql: str
+
+
+@app.post("/execute-sql")
+async def execute_sql(request: SQLRequest, token: str = Depends(verify_api_key)):
+    """Execute arbitrary SQL query on database."""
+    try:
+        # Security: Only allow SELECT queries
+        sql_upper = request.sql.strip().upper()
+        if not sql_upper.startswith("SELECT"):
+            return {"error": "Only SELECT queries allowed for safety"}
+
+        cursor = db_conn.execute(request.sql)
+        columns = [desc[0] for desc in cursor.description] if cursor.description else []
+        rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+        return {
+            "columns": columns,
+            "rows": rows,
+            "count": len(rows),
+            "success": True,
+        }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "success": False,
+        }
+
+
 @app.get("/stats")
 async def stats():
     """Dashboard statistics."""
