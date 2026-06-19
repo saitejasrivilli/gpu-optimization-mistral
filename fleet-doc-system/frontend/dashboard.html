@@ -161,6 +161,43 @@
             border-bottom: none;
         }
 
+        .navbar {
+            position: sticky;
+            top: 0;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        .navbar-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .navbar-links a {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: opacity 0.2s;
+        }
+
+        .navbar-links a:hover {
+            opacity: 0.7;
+        }
+
         @media (max-width: 768px) {
             .grid {
                 grid-template-columns: 1fr;
@@ -169,10 +206,30 @@
             h1 {
                 font-size: 20px;
             }
+
+            .navbar {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .navbar-links {
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
 </head>
 <body>
+    <nav class="navbar">
+        <a href="/" class="navbar-brand">FleetQA</a>
+        <div class="navbar-links">
+            <a href="/">🏠 Home</a>
+            <a href="/dashboard">📊 Dashboard</a>
+            <a href="/database">🗄️ Database</a>
+            <a href="/architecture">🏗️ How It Works</a>
+        </div>
+    </nav>
+
     <div class="container">
         <header>
             <h1>📊 Fleet System Dashboard</h1>
@@ -352,14 +409,5 @@
         // Refresh every 30 seconds
         setInterval(loadDashboard, 30000);
     </script>
-
-    <div style="text-align: center; margin-top: 60px; padding-top: 20px; padding-bottom: 40px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted);">
-        <p style="margin-bottom: 12px;">FleetQA - Fleet Document Management System</p>
-        <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
-            <a href="/" style="color: var(--primary); text-decoration: none; margin: 0 10px;">🏠 Home</a>
-            <a href="/database" style="color: var(--primary); text-decoration: none; margin: 0 10px;">🗄️ Database</a>
-            <a href="/architecture" style="color: var(--primary); text-decoration: none; margin: 0 10px;">🏗️ How It Works</a>
-        </div>
-    </div>
 </body>
 </html>
