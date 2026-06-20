@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet" type="text/css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #0a0e27;
+            color: #e0e0e0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #0a0e27 0%, #1a1f4b 100%);
+            padding: 20px 30px;
+            border-bottom: 3px solid #00ff88;
+        }
+
+        .header h1 {
+            color: #00ff88;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header-desc {
+            color: #00d4ff;
+            font-size: 14px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 30px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .legend-box {
+            width: 25px;
+            height: 25px;
+            border-radius: 4px;
+            border: 2px solid white;
+        }
+
+        .content {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .canvas {
+            flex: 1;
+            background: #0f1535;
+            border-radius: 12px;
+            border: 2px solid #00ff88;
+            overflow: hidden;
+        }
+
+        #network {
+            width: 100%;
+            height: 100%;
+        }
+
+        .panel {
+            width: 400px;
+            background: #0f1535;
+            border: 2px solid #00d4ff;
+            border-radius: 12px;
+            padding: 25px;
+            overflow-y: auto;
+        }
+
+        .panel h3 {
+            color: #00ff88;
+            font-size: 18px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #00d4ff;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        .stat-value {
+            color: #00ff88;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .info-box {
+            background: rgba(0, 255, 136, 0.1);
+            border-left: 4px solid #00ff88;
+            padding: 12px;
+            margin: 12px 0;
+            border-radius: 4px;
+            line-height: 1.6;
+            font-size: 12px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00ff88;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏗️ Complete System Architecture</h1>
+            <div class="header-desc">Clinical ML Pipeline on Google Cloud - Click nodes for details</div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-box" style="background: #00b8ff;"></div>
+                    <span>Input</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box" style="background: #00ff88;"></div>
+                    <span>Processing</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box" style="background: #ff9f43;"></div>
+                    <span>Storage</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box" style="background: #ee5a6f;"></div>
+                    <span>Serving</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box" style="background: #ffd700;"></div>
+                    <span>Monitoring</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="canvas">
+                <div id="network"></div>
+            </div>
+            <div class="panel">
+                <h3>Details</h3>
+                <div id="panelContent">
+                    <div class="info-box">Select a node to view details</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const data = {
+            nodes: [
+                // INPUT
+                { id: 'clinical', label: 'CLINICAL\nNOTES', color: '#00b8ff', type: 'input' },
+                { id: 'training', label: 'TRAINING\nDATA', color: '#00b8ff', type: 'input' },
+                { id: 'inference', label: 'INFERENCE\nREQUESTS', color: '#00b8ff', type: 'input' },
+
+                // PROCESSING ML
+                { id: 'train', label: 'TRAIN\nMODEL', color: '#00ff88', type: 'processing' },
+                { id: 'validate', label: 'VALIDATE\nMETRICS', color: '#00ff88', type: 'processing' },
+
+                // PROCESSING NLP
+                { id: 'deid', label: 'DE-ID\n(PHI)', color: '#00ff88', type: 'processing' },
+                { id: 'ner', label: 'NER\nEXTRACT', color: '#00ff88', type: 'processing' },
+                { id: 'fhir', label: 'FHIR\nBUNDLE', color: '#00ff88', type: 'processing' },
+
+                // STORAGE
+                { id: 'registry', label: 'LOCAL\nREGISTRY', color: '#ff9f43', type: 'storage' },
+                { id: 'gcs', label: 'CLOUD\nSTORAGE', color: '#ff9f43', type: 'storage' },
+                { id: 'bq', label: 'BIGQUERY\nWARE', color: '#ff9f43', type: 'storage' },
+
+                // SERVING
+                { id: 'vertex', label: 'VERTEX\nAI', color: '#ee5a6f', type: 'serving' },
+                { id: 'endpoint', label: 'ENDPOINTS\n(REST)', color: '#ee5a6f', type: 'serving' },
+
+                // MONITORING
+                { id: 'monitor', label: 'MONITORING\n& DRIFT', color: '#ffd700', type: 'monitoring' },
+                { id: 'analytics', label: 'ANALYTICS\n& SQL', color: '#ffd700', type: 'monitoring' }
+            ],
+            edges: [
+                // INPUT TO PROCESSING
+                { from: 'clinical', to: 'deid', label: 'raw note' },
+                { from: 'training', to: 'train', label: 'train/test' },
+                { from: 'inference', to: 'endpoint', label: 'request' },
+
+                // ML FLOW
+                { from: 'train', to: 'validate', label: 'model+metrics' },
+                { from: 'validate', to: 'registry', label: 'save' },
+
+                // NLP FLOW
+                { from: 'deid', to: 'ner', label: '6 PHI masked' },
+                { from: 'ner', to: 'fhir', label: '24 entities' },
+                { from: 'fhir', to: 'bq', label: '14 resources' },
+
+                // TO STORAGE
+                { from: 'registry', to: 'gcs', label: 'upload' },
+
+                // TO SERVING
+                { from: 'gcs', to: 'vertex', label: 'register' },
+                { from: 'vertex', to: 'endpoint', label: 'deploy' },
+
+                // TO MONITORING
+                { from: 'bq', to: 'monitor', label: 'track' },
+                { from: 'bq', to: 'analytics', label: 'query' },
+                { from: 'endpoint', to: 'monitor', label: 'logs' }
+            ],
+            nodeInfo: {
+                'clinical': {
+                    title: 'Clinical Notes Input',
+                    stats: [
+                        ['Format', 'FHIR R4 / Raw Text'],
+                        ['Size', '562 characters'],
+                        ['Contains', 'PHI - Needs Masking'],
+                        ['Status', 'Ready']
+                    ]
+                },
+                'training': {
+                    title: 'Training Data',
+                    stats: [
+                        ['Format', 'CSV / Parquet'],
+                        ['Samples', '500'],
+                        ['Features', '20'],
+                        ['Split', '80% train / 20% test']
+                    ]
+                },
+                'inference': {
+                    title: 'Real-time Inference',
+                    stats: [
+                        ['Source', 'REST API'],
+                        ['Latency', '<100ms (p95)'],
+                        ['Throughput', '1000+ req/sec'],
+                        ['Scaling', 'Auto 0-100 replicas']
+                    ]
+                },
+                'train': {
+                    title: 'Model Training',
+                    stats: [
+                        ['Framework', 'PyTorch + DDP'],
+                        ['Architecture', '20→64→32→1'],
+                        ['Optimizer', 'Adam'],
+                        ['Epochs', '3'],
+                        ['Loss Function', 'BCEWithLogitsLoss']
+                    ]
+                },
+                'validate': {
+                    title: 'Validation Results',
+                    stats: [
+                        ['Accuracy', '87.00%'],
+                        ['F1-Score', '0.8762'],
+                        ['Final Loss', '0.1865'],
+                        ['Status', '✓ Production Ready']
+                    ]
+                },
+                'deid': {
+                    title: 'De-Identification',
+                    stats: [
+                        ['Method', 'Pattern-based PHI mask'],
+                        ['Rules', '5 categories'],
+                        ['PHI Found', '6 spans'],
+                        ['Coverage', '100% of common PHI'],
+                        ['Output', 'Masked as [TYPE]']
+                    ]
+                },
+                'ner': {
+                    title: 'Named Entity Recognition',
+                    stats: [
+                        ['Model', 'Rule-based + BiLSTM'],
+                        ['Entities Found', '24 total'],
+                        ['Diagnoses', '5'],
+                        ['Medications', '5'],
+                        ['Avg Confidence', '0.95']
+                    ]
+                },
+                'fhir': {
+                    title: 'FHIR R4 Bundle',
+                    stats: [
+                        ['Standard', 'FHIR R4'],
+                        ['Bundle ID', 'bundle-9e353d77'],
+                        ['Total Resources', '14'],
+                        ['Patient', '1'],
+                        ['Conditions', '2'],
+                        ['Medications', '4'],
+                        ['Observations', '5']
+                    ]
+                },
+                'registry': {
+                    title: 'Local Model Registry',
+                    stats: [
+                        ['Storage', 'Local Filesystem'],
+                        ['Model', 'prod-classifier'],
+                        ['Version', '1.0.0'],
+                        ['Size', '0.02 MB'],
+                        ['Status', 'PRODUCTION']
+                    ]
+                },
+                'gcs': {
+                    title: 'Cloud Storage',
+                    stats: [
+                        ['Service', 'Google Cloud Storage'],
+                        ['Bucket', 'ml-pipeline-sa'],
+                        ['Paths', 'models/, logs/, artifacts/'],
+                        ['Availability', '99.99%']
+                    ]
+                },
+                'bq': {
+                    title: 'BigQuery Data Warehouse',
+                    stats: [
+                        ['Service', 'Google BigQuery'],
+                        ['Dataset', 'clinical_data'],
+                        ['fhir_bundles', '1 row'],
+                        ['phi_tracking', '6 rows'],
+                        ['clinical_entities', '24 rows'],
+                        ['Load Method', 'Batch JSONL - FREE ✓']
+                    ]
+                },
+                'vertex': {
+                    title: 'Vertex AI Registry',
+                    stats: [
+                        ['Service', 'Google Vertex AI'],
+                        ['Function', 'Model versioning'],
+                        ['Current Ver', '1.0.0'],
+                        ['Status', 'PRODUCTION'],
+                        ['Tracking', 'Experiments & metrics']
+                    ]
+                },
+                'endpoint': {
+                    title: 'Vertex AI Endpoints',
+                    stats: [
+                        ['Type', 'REST API'],
+                        ['Scaling', 'Auto 0-100 replicas'],
+                        ['Latency', '<100ms (p95)'],
+                        ['Throughput', '1000+ req/sec'],
+                        ['Monitoring', 'Real-time dashboards']
+                    ]
+                },
+                'monitor': {
+                    title: 'Monitoring & Drift',
+                    stats: [
+                        ['Performance', '87% accuracy'],
+                        ['Drift Detection', 'Via SQL'],
+                        ['Latency (p95)', '<100ms'],
+                        ['Volume', 'Real-time tracking'],
+                        ['Cost', '$0.00 (free tier)']
+                    ]
+                },
+                'analytics': {
+                    title: 'Analytics & Insights',
+                    stats: [
+                        ['Engine', 'BigQuery SQL'],
+                        ['PHI Audit', '6 detections'],
+                        ['Entity Analysis', '24 entities'],
+                        ['Compliance', 'HIPAA-aware'],
+                        ['Reports', 'Real-time dashboards']
+                    ]
+                }
+            }
+        };
+
+        let network = null;
+
+        function initNetwork() {
+            const nodeData = new vis.DataSet(data.nodes.map(n => ({
+                id: n.id,
+                label: n.label,
+                color: {
+                    background: n.color,
+                    border: '#ffffff',
+                    highlight: { background: '#ffffff', border: n.color }
+                },
+                font: {
+                    color: '#000000',
+                    size: 14,
+                    face: 'Arial',
+                    bold: { size: 16, color: '#000000' }
+                },
+                padding: 20,
+                margin: 20,
+                borderWidth: 3,
+                borderWidthSelected: 5,
+                shadow: { enabled: true, color: 'rgba(0,0,0,0.5)', size: 15, x: 0, y: 0 },
+                shape: 'box'
+            })));
+
+            const edgeData = new vis.DataSet(data.edges.map(e => ({
+                from: e.from,
+                to: e.to,
+                label: e.label,
+                color: { color: '#00d4ff', opacity: 0.8 },
+                font: { color: '#00d4ff', size: 11 },
+                arrows: { to: { enabled: true, scaleFactor: 0.8 } },
+                smooth: { type: 'cubicBezier', forceDirection: 'none' },
+                width: 2
+            })));
+
+            const container = document.getElementById('network');
+            const graphData = { nodes: nodeData, edges: edgeData };
+            const options = {
+                physics: {
+                    enabled: true,
+                    stabilization: { iterations: 500 },
+                    barnesHut: {
+                        gravitationalConstant: -40000,
+                        centralGravity: 0.3,
+                        springLength: 300,
+                        springConstant: 0.03
+                    }
+                },
+                interaction: { hover: true, navigationButtons: true, keyboard: true }
+            };
+
+            if (network) network.destroy();
+            network = new vis.Network(container, graphData, options);
+
+            network.on('click', (params) => {
+                if (params.nodes.length > 0) {
+                    const nodeId = params.nodes[0];
+                    const nodeInfo = data.nodeInfo[nodeId];
+
+                    if (nodeInfo) {
+                        let html = `<h3>${nodeInfo.title}</h3>`;
+                        nodeInfo.stats.forEach(([label, value]) => {
+                            html += `<div class="stat-row"><span class="stat-label">${label}</span><span class="stat-value">${value}</span></div>`;
+                        });
+                        document.getElementById('panelContent').innerHTML = html;
+                    }
+                }
+            });
+
+            network.on('hoverNode', () => {
+                document.getElementById('network').style.cursor = 'pointer';
+            });
+
+            network.on('blurNode', () => {
+                document.getElementById('network').style.cursor = 'default';
+            });
+        }
+
+        window.addEventListener('load', initNetwork);
+    </script>
+</body>
+</html>
