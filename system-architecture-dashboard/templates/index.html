@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Flow Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0e27;
+            color: #00ff88;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        .header {
+            background: #1a1f4b;
+            padding: 20px;
+            border-bottom: 3px solid #00ff88;
+        }
+
+        .header h1 {
+            color: #00ff88;
+            font-size: 28px;
+            margin-bottom: 8px;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        .header p {
+            color: #00d4ff;
+            font-size: 12px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 30px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .legend-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+
+        .content {
+            display: flex;
+            flex: 1;
+            gap: 15px;
+            padding: 15px;
+            overflow: hidden;
+        }
+
+        .diagram-container {
+            flex: 1;
+            background: #0f1535;
+            border-radius: 8px;
+            border: 2px solid #00ff88;
+            overflow: auto;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            min-width: 1400px;
+            min-height: 900px;
+        }
+
+        .node-group {
+            cursor: pointer;
+        }
+
+        .node-rect {
+            fill: white;
+            stroke: #000;
+            stroke-width: 2;
+            filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
+            transition: all 0.3s;
+        }
+
+        .node-group:hover .node-rect {
+            filter: drop-shadow(0 0 15px rgba(255,255,255,0.8));
+            stroke-width: 3;
+        }
+
+        .node-text {
+            font-size: 14px;
+            font-weight: bold;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            fill: #000;
+            pointer-events: none;
+        }
+
+        .node-group.running .node-rect {
+            fill: #ffff00 !important;
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .node-group.selected .node-rect {
+            stroke: #ffffff;
+            stroke-width: 4;
+            filter: drop-shadow(0 0 20px rgba(255,255,255,0.9));
+        }
+
+        .edge-line {
+            stroke: #00d4ff;
+            stroke-width: 2;
+            fill: none;
+            marker-end: url(#arrowhead);
+        }
+
+        .edge-label {
+            font-size: 10px;
+            fill: #00d4ff;
+            pointer-events: none;
+            font-weight: bold;
+        }
+
+        .panel {
+            width: 450px;
+            background: #0f1535;
+            border: 2px solid #00d4ff;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel h3 {
+            color: #00ff88;
+            font-size: 16px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            text-shadow: 0 0 5px rgba(0, 255, 136, 0.5);
+        }
+
+        .log-output {
+            flex: 1;
+            background: #0a0e27;
+            border: 1px solid #00d4ff;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-y: auto;
+            color: #00ff88;
+            font-size: 10px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: 'Courier New', monospace;
+        }
+
+        .log-output.empty {
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .btn-run {
+            background: #00ff88;
+            color: #000;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            margin-top: 15px;
+            transition: all 0.3s;
+            font-family: 'Courier New', monospace;
+        }
+
+        .btn-run:hover:not(:disabled) {
+            background: #00d4ff;
+            box-shadow: 0 0 10px #00d4ff;
+        }
+
+        .btn-run:disabled {
+            background: #666;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .status {
+            font-size: 11px;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            background: rgba(0, 255, 136, 0.1);
+            border-left: 2px solid #00ff88;
+            color: #00ff88;
+        }
+
+        .status.loading {
+            background: rgba(255, 200, 0, 0.1);
+            border-left-color: #ffc800;
+            color: #ffc800;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00ff88;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ Interactive Flow Dashboard with Execution</h1>
+            <p>Click any node to select, press ENTER or click RUN to execute and see logs</p>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-box" style="background: #00b8ff;"></div>
+                    <span>INPUT</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box" style="background: #00ff88;"></div>
+                    <span>PROCESSING</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box" style="background: #ff9f43;"></div>
+                    <span>STORAGE</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box" style="background: #ee5a6f;"></div>
+                    <span>SERVING</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box" style="background: #ffd700;"></div>
+                    <span>MONITORING</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="diagram-container">
+                <svg id="diagram">
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                            <polygon points="0 0, 10 3, 0 6" fill="#00d4ff" />
+                        </marker>
+                    </defs>
+
+                    <!-- EDGES / CONNECTIONS -->
+                    <line class="edge-line" x1="190" y1="120" x2="280" y2="120"></line>
+                    <text class="edge-label" x="230" y="110">raw note</text>
+
+                    <line class="edge-line" x1="190" y1="280" x2="280" y2="280"></line>
+                    <text class="edge-label" x="230" y="270">train/test</text>
+
+                    <line class="edge-line" x1="190" y1="440" x2="970" y2="330"></line>
+                    <text class="edge-label" x="550" y="380">infer req</text>
+
+                    <line class="edge-line" x1="420" y1="120" x2="510" y2="120"></line>
+                    <text class="edge-label" x="460" y="110">model</text>
+
+                    <line class="edge-line" x1="580" y1="160" x2="580" y2="220"></line>
+                    <text class="edge-label" x="590" y="190">de-id text</text>
+
+                    <line class="edge-line" x1="580" y1="300" x2="580" y2="360"></line>
+                    <text class="edge-label" x="595" y="330">24 ent</text>
+
+                    <line class="edge-line" x1="650" y1="400" x2="740" y2="400"></line>
+                    <text class="edge-label" x="690" y="390">14 res</text>
+
+                    <line class="edge-line" x1="420" y1="280" x2="740" y2="120"></line>
+                    <text class="edge-label" x="560" y="190">save</text>
+
+                    <line class="edge-line" x1="880" y1="120" x2="970" y2="200"></line>
+                    <text class="edge-label" x="920" y="150">upload</text>
+
+                    <line class="edge-line" x1="880" y1="400" x2="970" y2="400"></line>
+                    <text class="edge-label" x="920" y="390">batch</text>
+
+                    <line class="edge-line" x1="1110" y1="200" x2="1200" y2="200"></line>
+                    <text class="edge-label" x="1150" y="190">register</text>
+
+                    <line class="edge-line" x1="1110" y1="400" x2="1200" y2="260"></line>
+                    <text class="edge-label" x="1150" y="330">track</text>
+
+                    <line class="edge-line" x1="1040" y1="280" x2="1040" y2="340"></line>
+                    <text class="edge-label" x="1050" y="310">deploy</text>
+
+                    <line class="edge-line" x1="1110" y1="370" x2="1200" y2="370"></line>
+                    <text class="edge-label" x="1150" y="360">logs</text>
+
+                    <!-- NODES -->
+                    <!-- INPUT LAYER -->
+                    <g class="node-group" data-node="clinical">
+                        <rect class="node-rect" x="50" y="80" width="140" height="80" fill="#00b8ff" rx="5"></rect>
+                        <text class="node-text" x="120" y="120">CLINICAL<tspan x="120" dy="20">NOTES</tspan></text>
+                    </g>
+
+                    <g class="node-group" data-node="training">
+                        <rect class="node-rect" x="50" y="240" width="140" height="80" fill="#00b8ff" rx="5"></rect>
+                        <text class="node-text" x="120" y="280">TRAINING<tspan x="120" dy="20">DATA</tspan></text>
+                    </g>
+
+                    <g class="node-group" data-node="inference">
+                        <rect class="node-rect" x="50" y="400" width="140" height="80" fill="#00b8ff" rx="5"></rect>
+                        <text class="node-text" x="120" y="440">INFERENCE<tspan x="120" dy="20">REQ</tspan></text>
+                    </g>
+
+                    <!-- PROCESSING ML -->
+                    <g class="node-group" data-node="train">
+                        <rect class="node-rect" x="280" y="80" width="140" height="80" fill="#00ff88" rx="5"></rect>
+                        <text class="node-text" x="350" y="120">TRAIN<tspan x="350" dy="20">MODEL</tspan></text>
+                    </g>
+
+                    <g class="node-group" data-node="validate">
+                        <rect class="node-rect" x="280" y="240" width="140" height="80" fill="#00ff88" rx="5"></rect>
+                        <text class="node-text" x="350" y="280">VALIDATE<tspan x="350" dy="20">METRICS</tspan></text>
+                    </g>
+
+                    <!-- PROCESSING NLP -->
+                    <g class="node-group" data-node="deid">
+                        <rect class="node-rect" x="510" y="80" width="140" height="80" fill="#00ff88" rx="5"></rect>
+                        <text class="node-text" x="580" y="120">DE-ID<tspan x="580" dy="20">PHI</tspan></text>
+                    </g>
+
+                    <g class="node-group" data-node="ner">
+                        <rect class="node-rect" x="510" y="240" width="140" height="80" fill="#00ff88" rx="5"></rect>
+                        <text class="node-text" x="580" y="280">NER<tspan x="580" dy="20">EXTRACT</tspan></text>
+                    </g>
+
+                    <g class="node-group" data-node="fhir">
+                        <rect class="node-rect" x="510" y="400" width="140" height="80" fill="#00ff88" rx="5"></rect>
+                        <text class="node-text" x="580" y="440">FHIR<tspan x="580" dy="20">BUNDLE</tspan></text>
+                    </g>
+
+                    <!-- STORAGE -->
+                    <g class="node-group" data-node="registry">
+                        <rect class="node-rect" x="740" y="80" width="140" height="80" fill="#ff9f43" rx="5"></rect>
+                        <text class="node-text" x="810" y="120">LOCAL<tspan x="810" dy="20">REGISTRY</tspan></text>
+                    </g>
+
+                    <g class="node-group" data-node="gcs">
+                        <rect class="node-rect" x="740" y="240" width="140" height="80" fill="#ff9f43" rx="5"></rect>
+                        <text class="node-text" x="810" y="280">CLOUD<tspan x="810" dy="20">STORAGE</tspan></text>
+                    </g>
+
+                    <g class="node-group" data-node="bigquery">
+                        <rect class="node-rect" x="740" y="400" width="140" height="80" fill="#ff9f43" rx="5"></rect>
+                        <text class="node-text" x="810" y="440">BIGQUERY<tspan x="810" dy="20">LOAD</tspan></text>
+                    </g>
+
+                    <!-- SERVING -->
+                    <g class="node-group" data-node="vertex">
+                        <rect class="node-rect" x="970" y="160" width="140" height="80" fill="#ee5a6f" rx="5"></rect>
+                        <text class="node-text" x="1040" y="200">VERTEX<tspan x="1040" dy="20">AI</tspan></text>
+                    </g>
+
+                    <g class="node-group" data-node="endpoint">
+                        <rect class="node-rect" x="970" y="320" width="140" height="80" fill="#ee5a6f" rx="5"></rect>
+                        <text class="node-text" x="1040" y="360">ENDPOINTS<tspan x="1040" dy="20">REST</tspan></text>
+                    </g>
+
+                    <!-- MONITORING -->
+                    <g class="node-group" data-node="monitoring">
+                        <rect class="node-rect" x="1200" y="160" width="140" height="80" fill="#ffd700" rx="5"></rect>
+                        <text class="node-text" x="1270" y="200">MONITORING<tspan x="1270" dy="20">DRIFT</tspan></text>
+                    </g>
+
+                    <g class="node-group" data-node="analytics">
+                        <rect class="node-rect" x="1200" y="320" width="140" height="80" fill="#ffd700" rx="5"></rect>
+                        <text class="node-text" x="1270" y="360">ANALYTICS<tspan x="1270" dy="20">SQL</tspan></text>
+                    </g>
+                </svg>
+            </div>
+
+            <div class="panel">
+                <h3>Execution Logs</h3>
+                <div class="log-output empty" id="logs">
+                    Click a node to select<br>
+                    Press ENTER or click RUN to execute
+                </div>
+                <button class="btn-run" id="runBtn" onclick="runNode()">▶ RUN NODE (Enter)</button>
+                <div class="status" id="status"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedNode = null;
+        let isRunning = false;
+
+        // Setup node click handlers
+        document.querySelectorAll('.node-group[data-node]').forEach(node => {
+            node.addEventListener('click', function() {
+                document.querySelectorAll('.node-group').forEach(n => {
+                    n.classList.remove('selected');
+                });
+                selectedNode = this.dataset.node;
+                this.classList.add('selected');
+                updateStatus(`✓ Selected: ${selectedNode} (press ENTER to run)`);
+            });
+        });
+
+        async function runNode() {
+            if (!selectedNode || isRunning) return;
+
+            isRunning = true;
+            const runBtn = document.getElementById('runBtn');
+            const nodeElem = document.querySelector(`[data-node="${selectedNode}"]`);
+
+            runBtn.disabled = true;
+            runBtn.textContent = '▶ RUNNING...';
+            nodeElem.classList.add('running');
+
+            const logsDiv = document.getElementById('logs');
+            logsDiv.innerHTML = 'Connecting to backend...\nExecuting: ' + selectedNode;
+            logsDiv.classList.remove('empty');
+
+            updateStatus('▶ Running: ' + selectedNode, 'loading');
+
+            try {
+                const response = await fetch(`http://localhost:5000/api/node/${selectedNode}`);
+                if (!response.ok) {
+                    logsDiv.innerHTML = '❌ ERROR: Cannot connect to backend\n\n' +
+                        'Start backend server:\n' +
+                        '  $ pip install flask flask-cors\n' +
+                        '  $ python3 /Users/.../Downloads/backend.py\n\n' +
+                        'Then refresh this page.';
+                    updateStatus('❌ Backend not running', 'loading');
+                } else {
+                    const data = await response.json();
+                    logsDiv.textContent = data.output;
+                    logsDiv.classList.remove('empty');
+                    updateStatus('✓ Execution complete');
+                }
+            } catch (err) {
+                logsDiv.innerHTML = '❌ ERROR: ' + err.message + '\n\n' +
+                    'Make sure backend is running:\n' +
+                    '  python3 /Users/.../Downloads/backend.py';
+                updateStatus('❌ Connection error', 'loading');
+            }
+
+            nodeElem.classList.remove('running');
+            runBtn.disabled = false;
+            runBtn.textContent = '▶ RUN NODE (Enter)';
+            isRunning = false;
+        }
+
+        function updateStatus(msg, type = '') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = msg;
+            statusDiv.className = 'status' + (type ? ' ' + type : '');
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && selectedNode && !isRunning) {
+                runNode();
+            }
+        });
+
+        // Initial message
+        updateStatus('Select a node (click) and press ENTER or click RUN button');
+    </script>
+</body>
+</html>
