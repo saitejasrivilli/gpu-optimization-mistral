@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive System Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0e27;
+            color: #00ff88;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        .header {
+            background: #1a1f4b;
+            padding: 20px;
+            border-bottom: 3px solid #00ff88;
+        }
+
+        .header h1 {
+            color: #00ff88;
+            font-size: 28px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        .legend {
+            display: flex;
+            gap: 30px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .legend-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+
+        .content {
+            display: flex;
+            flex: 1;
+            gap: 15px;
+            padding: 15px;
+            overflow: hidden;
+        }
+
+        .diagram {
+            flex: 1;
+            background: #0f1535;
+            border-radius: 8px;
+            border: 2px solid #00ff88;
+            overflow: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .nodes-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            width: 100%;
+        }
+
+        .node {
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid white;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            text-align: center;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100px;
+            color: black;
+        }
+
+        .node:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255,255,255,0.8);
+        }
+
+        .node.running {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .panel {
+            width: 450px;
+            background: #0f1535;
+            border: 2px solid #00d4ff;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel h3 {
+            color: #00ff88;
+            font-size: 16px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            text-shadow: 0 0 5px rgba(0, 255, 136, 0.5);
+        }
+
+        .log-output {
+            flex: 1;
+            background: #0a0e27;
+            border: 1px solid #00d4ff;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-y: auto;
+            color: #00ff88;
+            font-size: 11px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .log-output.empty {
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-run {
+            background: #00ff88;
+            color: #000;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+
+        .btn-run:hover:not(:disabled) {
+            background: #00d4ff;
+            box-shadow: 0 0 10px #00d4ff;
+        }
+
+        .btn-run:disabled {
+            background: #666;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .status {
+            font-size: 11px;
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            background: rgba(0, 255, 136, 0.1);
+            border-left: 2px solid #00ff88;
+        }
+
+        .status.loading {
+            background: rgba(255, 200, 0, 0.1);
+            border-left-color: #ffc800;
+            color: #ffc800;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00ff88;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ Interactive System Dashboard</h1>
+            <p>Click any node to RUN it and see output logs</p>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-box" style="background: #00b8ff;"></div>
+                    <span>INPUT</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box" style="background: #00ff88;"></div>
+                    <span>PROCESSING</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box" style="background: #ff9f43;"></div>
+                    <span>STORAGE</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box" style="background: #ee5a6f;"></div>
+                    <span>SERVING</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box" style="background: #ffd700;"></div>
+                    <span>MONITORING</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="diagram">
+                <div class="nodes-grid">
+                    <!-- INPUT -->
+                    <div class="node" style="background: #00b8ff;" data-node="clinical" title="Click to run">CLINICAL<br>NOTES</div>
+                    <div class="node" style="background: #00b8ff;" data-node="training" title="Click to run">TRAINING<br>DATA</div>
+                    <div class="node" style="background: #00b8ff;" data-node="inference" title="Click to run">INFERENCE<br>REQ</div>
+                    <div style="display: none;"></div>
+                    <div style="display: none;"></div>
+
+                    <!-- PROCESSING ML -->
+                    <div class="node" style="background: #00ff88;" data-node="train" title="Click to run">TRAIN<br>MODEL</div>
+                    <div class="node" style="background: #00ff88;" data-node="validate" title="Click to run">VALIDATE<br>METRICS</div>
+                    <div style="display: none;"></div>
+                    <div style="display: none;"></div>
+                    <div style="display: none;"></div>
+
+                    <!-- PROCESSING NLP -->
+                    <div class="node" style="background: #00ff88;" data-node="deid" title="Click to run">DE-ID<br>PHI</div>
+                    <div class="node" style="background: #00ff88;" data-node="ner" title="Click to run">NER<br>EXTRACT</div>
+                    <div class="node" style="background: #00ff88;" data-node="fhir" title="Click to run">FHIR<br>BUNDLE</div>
+                    <div style="display: none;"></div>
+                    <div style="display: none;"></div>
+
+                    <!-- STORAGE -->
+                    <div class="node" style="background: #ff9f43;" data-node="registry" title="Click to run">LOCAL<br>REGISTRY</div>
+                    <div class="node" style="background: #ff9f43;" data-node="gcs" title="Click to run">CLOUD<br>STORAGE</div>
+                    <div class="node" style="background: #ff9f43;" data-node="bigquery" title="Click to run">BIGQUERY<br>LOAD</div>
+                    <div style="display: none;"></div>
+                    <div style="display: none;"></div>
+
+                    <!-- SERVING -->
+                    <div class="node" style="background: #ee5a6f;" data-node="vertex" title="Click to run">VERTEX<br>AI</div>
+                    <div class="node" style="background: #ee5a6f;" data-node="endpoint" title="Click to run">ENDPOINTS<br>REST</div>
+                    <div style="display: none;"></div>
+                    <div style="display: none;"></div>
+                    <div style="display: none;"></div>
+
+                    <!-- MONITORING -->
+                    <div class="node" style="background: #ffd700;" data-node="monitoring" title="Click to run">MONITORING<br>DRIFT</div>
+                    <div class="node" style="background: #ffd700;" data-node="analytics" title="Click to run">ANALYTICS<br>SQL</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>Execution Logs</h3>
+                <div class="log-output empty" id="logs">
+                    Click a node to execute and see logs here
+                </div>
+                <button class="btn-run" id="runBtn" onclick="runNode()">RUN SELECTED NODE</button>
+                <div class="status" id="status"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedNode = null;
+        let isRunning = false;
+
+        const nodeIds = {
+            'clinical': 'clinical',
+            'training': 'training',
+            'inference': 'inference',
+            'train': 'train',
+            'validate': 'validate',
+            'deid': 'deid',
+            'ner': 'ner',
+            'fhir': 'fhir',
+            'registry': 'registry',
+            'gcs': 'gcs',
+            'bigquery': 'bigquery',
+            'vertex': 'vertex',
+            'endpoint': 'endpoint',
+            'monitoring': 'monitoring',
+            'analytics': 'analytics'
+        };
+
+        // Setup node click handlers
+        document.querySelectorAll('.node[data-node]').forEach(node => {
+            node.addEventListener('click', function() {
+                document.querySelectorAll('.node').forEach(n => {
+                    n.style.border = '2px solid white';
+                    n.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+                });
+                selectedNode = this.dataset.node;
+                this.style.border = '3px solid white';
+                this.style.boxShadow = '0 0 20px rgba(255,255,255,0.8)';
+                updateStatus(`Selected: ${selectedNode}`);
+            });
+        });
+
+        async function runNode() {
+            if (!selectedNode || isRunning) return;
+
+            isRunning = true;
+            const runBtn = document.getElementById('runBtn');
+            runBtn.disabled = true;
+            runBtn.textContent = 'RUNNING...';
+
+            const logsDiv = document.getElementById('logs');
+            logsDiv.textContent = 'Executing node: ' + selectedNode + '...';
+            logsDiv.classList.remove('empty');
+
+            updateStatus('Running node: ' + selectedNode, 'loading');
+
+            try {
+                const response = await fetch(`http://localhost:5000/api/node/${selectedNode}`);
+                if (!response.ok) {
+                    logsDiv.textContent = 'ERROR: Failed to connect to backend\n\nMake sure backend is running:\n  python3 /Users/.../Downloads/backend.py';
+                    updateStatus('Backend not running', 'loading');
+                } else {
+                    const data = await response.json();
+                    logsDiv.textContent = data.output;
+                    updateStatus('✓ Execution complete');
+                }
+            } catch (err) {
+                logsDiv.textContent = 'ERROR: ' + err.message + '\n\nMake sure backend server is running:\n  python3 /Users/.../Downloads/backend.py';
+                updateStatus('Connection failed', 'loading');
+            }
+
+            runBtn.disabled = false;
+            runBtn.textContent = 'RUN SELECTED NODE';
+            isRunning = false;
+        }
+
+        function updateStatus(msg, type = '') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = msg;
+            statusDiv.className = 'status' + (type ? ' ' + type : '');
+        }
+
+        // Allow Enter key to run
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && selectedNode) {
+                runNode();
+            }
+        });
+
+        updateStatus('Select a node and click RUN or press Enter');
+    </script>
+</body>
+</html>
