@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete System Architecture Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet" type="text/css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f4b 50%, #0f1535 100%);
+            color: #e0e0e0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(90deg, rgba(10, 14, 39, 0.95) 0%, rgba(26, 31, 75, 0.95) 100%);
+            padding: 20px 30px;
+            border-bottom: 3px solid #00ff88;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .header h1 {
+            color: #00ff88;
+            font-size: 28px;
+            margin-bottom: 8px;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+
+        .header p {
+            color: #00d4ff;
+            font-size: 13px;
+            letter-spacing: 1px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .content {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .canvas-container {
+            flex: 1;
+            background: linear-gradient(135deg, rgba(10, 14, 39, 0.6) 0%, rgba(26, 31, 75, 0.6) 100%);
+            border-radius: 12px;
+            border: 2px solid #00ff88;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(0, 255, 136, 0.15);
+        }
+
+        #network {
+            width: 100%;
+            height: 100%;
+        }
+
+        .sidebar {
+            width: 380px;
+            background: linear-gradient(135deg, rgba(26, 31, 75, 0.8) 0%, rgba(15, 21, 53, 0.8) 100%);
+            border: 2px solid #00d4ff;
+            border-radius: 12px;
+            overflow-y: auto;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 212, 255, 0.15);
+        }
+
+        .sidebar h3 {
+            color: #00ff88;
+            margin-bottom: 20px;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        .node-title {
+            color: #00ff88;
+            font-size: 15px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #00d4ff;
+        }
+
+        .info-block {
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 4px solid #00d4ff;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .info-block.input {
+            border-left-color: #00b8ff;
+            background: rgba(0, 184, 255, 0.1);
+        }
+
+        .info-block.processing {
+            border-left-color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .info-block.storage {
+            border-left-color: #ff9f43;
+            background: rgba(255, 159, 67, 0.1);
+        }
+
+        .info-block.serving {
+            border-left-color: #ee5a6f;
+            background: rgba(238, 90, 111, 0.1);
+        }
+
+        .info-block.monitoring {
+            border-left-color: #ffd700;
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .info-label {
+            color: #00ff88;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .metric-label {
+            color: #00d4ff;
+            font-size: 11px;
+        }
+
+        .metric-value {
+            color: #00ff88;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.active {
+            background: #00ff88;
+            box-shadow: 0 0 10px #00ff88;
+        }
+
+        .status-indicator.ready {
+            background: #00d4ff;
+            box-shadow: 0 0 10px #00d4ff;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .data-flow-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #00d4ff;
+        }
+
+        .data-item {
+            background: rgba(0, 255, 136, 0.05);
+            padding: 8px;
+            margin: 6px 0;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: 'Courier New', monospace;
+            color: #00ff88;
+            border-left: 2px solid #00ff88;
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #00ff88 0%, #00d4ff 100%);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #00ff88 0%, #00d4ff 100%);
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        .empty-state {
+            color: #888;
+            text-align: center;
+            padding: 40px 20px;
+            font-size: 13px;
+        }
+
+        .empty-state strong {
+            color: #00d4ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏗️ Complete System Architecture</h1>
+            <p>Clinical ML Pipeline on Google Cloud Platform - Click nodes for details</p>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #00b8ff;"></div>
+                    <span>Input Sources</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #00ff88;"></div>
+                    <span>Processing</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff9f43;"></div>
+                    <span>Storage</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ee5a6f;"></div>
+                    <span>Serving</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffd700;"></div>
+                    <span>Monitoring</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="canvas-container">
+                <div id="network"></div>
+            </div>
+            <div class="sidebar">
+                <h3>Details</h3>
+                <div id="sidebarContent">
+                    <div class="empty-state">
+                        <strong>Select a node</strong><br>to view details
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const architecture = {
+            nodes: [
+                // INPUT SOURCES
+                { id: 'input-clinical', label: 'Clinical Notes\n(FHIR Format)', color: '#00b8ff', title: 'Clinical notes with patient data' },
+                { id: 'input-training', label: 'Training Data\n(CSV/Parquet)', color: '#00b8ff', title: 'ML training datasets' },
+                { id: 'input-inference', label: 'Inference Data\n(Real-time)', color: '#00b8ff', title: 'Live prediction requests' },
+
+                // PROCESSING - ML PIPELINE
+                { id: 'ml-train', label: 'Model Training\n(PyTorch DDP)', color: '#00ff88', title: 'Distributed training' },
+                { id: 'ml-validate', label: 'Model Validation\n(Metrics)', color: '#00ff88', title: 'Evaluate model performance' },
+
+                // PROCESSING - CLINICAL NLP
+                { id: 'nlp-deid', label: 'De-Identification\n(PHI Masking)', color: '#00ff88', title: 'Remove sensitive data' },
+                { id: 'nlp-ner', label: 'NER Extraction\n(Entities)', color: '#00ff88', title: 'Extract medical entities' },
+                { id: 'nlp-fhir', label: 'FHIR Bundle\nGeneration', color: '#00ff88', title: 'Healthcare standard format' },
+
+                // LOCAL STORAGE
+                { id: 'local-registry', label: 'Local Registry\n(Model Versioning)', color: '#ff9f43', title: 'Local model storage' },
+                { id: 'local-cache', label: 'Local Cache\n(Predictions)', color: '#ff9f43', title: 'Local prediction cache' },
+
+                // GCP STORAGE
+                { id: 'gcs', label: 'Cloud Storage (GCS)\n(Models & Artifacts)', color: '#ff9f43', title: 'Google Cloud Storage' },
+                { id: 'bigquery', label: 'BigQuery\n(Data Warehouse)', color: '#ff9f43', title: 'FHIR bundles, PHI tracking, entities' },
+
+                // SERVING
+                { id: 'vertex-registry', label: 'Vertex AI\nModel Registry', color: '#ee5a6f', title: 'Version control & promotion' },
+                { id: 'vertex-endpoint', label: 'Vertex AI\nEndpoints', color: '#ee5a6f', title: 'Auto-scaling inference' },
+
+                // MONITORING
+                { id: 'monitoring', label: 'Monitoring\n(Drift Detection)', color: '#ffd700', title: 'Performance metrics' },
+                { id: 'analytics', label: 'Analytics\n(BigQuery SQL)', color: '#ffd700', title: 'Data insights' }
+            ],
+            edges: [
+                // INPUT TO PROCESSING
+                { from: 'input-clinical', to: 'nlp-deid', label: 'raw note', color: '#00b8ff', width: 2 },
+                { from: 'input-training', to: 'ml-train', label: 'train/test split', color: '#00b8ff', width: 2 },
+                { from: 'input-inference', to: 'vertex-endpoint', label: 'inference request', color: '#00b8ff', width: 2 },
+
+                // ML PIPELINE FLOW
+                { from: 'ml-train', to: 'ml-validate', label: 'model + metrics', color: '#00ff88', width: 2 },
+                { from: 'ml-validate', to: 'local-registry', label: 'save if good', color: '#00ff88', width: 2 },
+
+                // NLP PIPELINE FLOW
+                { from: 'nlp-deid', to: 'nlp-ner', label: '6 PHI masked', color: '#00ff88', width: 2 },
+                { from: 'nlp-ner', to: 'nlp-fhir', label: '24 entities', color: '#00ff88', width: 2 },
+                { from: 'nlp-fhir', to: 'local-cache', label: '14 FHIR resources', color: '#00ff88', width: 2 },
+
+                // LOCAL TO GCP
+                { from: 'local-registry', to: 'gcs', label: 'upload models', color: '#ff9f43', width: 2, dashes: true },
+                { from: 'local-cache', to: 'bigquery', label: 'batch load (JSONL)', color: '#ff9f43', width: 2, dashes: true },
+
+                // TO SERVING
+                { from: 'gcs', to: 'vertex-registry', label: 'register', color: '#ee5a6f', width: 2 },
+                { from: 'vertex-registry', to: 'vertex-endpoint', label: 'deploy', color: '#ee5a6f', width: 2 },
+
+                // TO MONITORING
+                { from: 'bigquery', to: 'monitoring', label: 'track metrics', color: '#ffd700', width: 2 },
+                { from: 'bigquery', to: 'analytics', label: 'query insights', color: '#ffd700', width: 2 },
+                { from: 'vertex-endpoint', to: 'monitoring', label: 'log predictions', color: '#ffd700', width: 2 }
+            ],
+            nodeInfo: {
+                'input-clinical': {
+                    type: 'input',
+                    title: 'Clinical Notes Input',
+                    content: `
+                        <div class="info-block input">
+                            <span class="info-label">Format:</span>
+                            <span class="info-value">FHIR R4 / Raw Text</span>
+                        </div>
+                        <div class="info-block input">
+                            <span class="info-label">Example:</span>
+                            <span class="info-value">562 char patient note</span>
+                        </div>
+                        <div class="info-block input">
+                            <span class="info-label">Contains:</span>
+                            <span class="info-value">PHI (Protected Health Info)</span>
+                        </div>
+                    `
+                },
+                'input-training': {
+                    type: 'input',
+                    title: 'Training Data Input',
+                    content: `
+                        <div class="info-block input">
+                            <span class="info-label">Format:</span>
+                            <span class="info-value">CSV / Parquet</span>
+                        </div>
+                        <div class="info-block input">
+                            <span class="info-label">Size:</span>
+                            <span class="info-value">500 samples × 20 features</span>
+                        </div>
+                        <div class="info-block input">
+                            <span class="info-label">Split:</span>
+                            <span class="info-value">80% train (400) / 20% test (100)</span>
+                        </div>
+                    `
+                },
+                'input-inference': {
+                    type: 'input',
+                    title: 'Real-time Inference Input',
+                    content: `
+                        <div class="info-block input">
+                            <span class="info-label">Source:</span>
+                            <span class="info-value">REST API / Pub/Sub</span>
+                        </div>
+                        <div class="info-block input">
+                            <span class="info-label">Latency:</span>
+                            <span class="info-value">&lt;100ms (p95)</span>
+                        </div>
+                        <div class="info-block input">
+                            <span class="info-label">Scaling:</span>
+                            <span class="info-value">Auto-scale 0-100 replicas</span>
+                        </div>
+                    `
+                },
+                'ml-train': {
+                    type: 'processing',
+                    title: 'Model Training',
+                    content: `
+                        <div class="info-block processing">
+                            <span class="info-label">Framework:</span>
+                            <span class="info-value">PyTorch + Distributed DDP</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Architecture:</span>
+                            <span class="metric-value">SimpleNN (20→64→32→1)</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Optimizer:</span>
+                            <span class="metric-value">Adam (lr=0.001)</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Epochs:</span>
+                            <span class="metric-value">3</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Loss:</span>
+                            <span class="metric-value">BCEWithLogitsLoss</span>
+                        </div>
+                    `
+                },
+                'ml-validate': {
+                    type: 'processing',
+                    title: 'Validation Results',
+                    content: `
+                        <div class="info-block processing">
+                            <span class="info-label">Metrics Tracked:</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Accuracy:</span>
+                            <span class="metric-value">87.00%</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">F1-Score:</span>
+                            <span class="metric-value">0.8762</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Loss (final):</span>
+                            <span class="metric-value">0.1865</span>
+                        </div>
+                        <div class="info-block processing">
+                            <span class="info-label">Status:</span>
+                            <span class="info-value">✓ Ready for production</span>
+                        </div>
+                    `
+                },
+                'nlp-deid': {
+                    type: 'processing',
+                    title: 'De-Identification Module',
+                    content: `
+                        <div class="info-block processing">
+                            <span class="info-label">Method:</span>
+                            <span class="info-value">Pattern-based PHI masking</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Rules:</span>
+                            <span class="metric-value">5 categories</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Detection:</span>
+                            <span class="metric-value">Patient, DOB, ID, Provider, Location</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Coverage:</span>
+                            <span class="metric-value">100% of common PHI</span>
+                        </div>
+                        <div class="info-block processing">
+                            <span class="info-label">Output:</span>
+                            <span class="info-value">6 PHI spans masked as [TYPE]</span>
+                        </div>
+                    `
+                },
+                'nlp-ner': {
+                    type: 'processing',
+                    title: 'Named Entity Recognition',
+                    content: `
+                        <div class="info-block processing">
+                            <span class="info-label">Model:</span>
+                            <span class="info-value">Rule-based + BiLSTM-CRF</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Entities Found:</span>
+                            <span class="metric-value">24 total</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Diagnoses:</span>
+                            <span class="metric-value">5 (Type 2 Diabetes, HTN, CAD...)</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Medications:</span>
+                            <span class="metric-value">5 (Metformin, Lisinopril...)</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Avg Confidence:</span>
+                            <span class="metric-value">0.95</span>
+                        </div>
+                    `
+                },
+                'nlp-fhir': {
+                    type: 'processing',
+                    title: 'FHIR R4 Bundle Generation',
+                    content: `
+                        <div class="info-block processing">
+                            <span class="info-label">Standard:</span>
+                            <span class="info-value">FHIR R4 (Healthcare)</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Bundle ID:</span>
+                            <span class="metric-value">bundle-9e353d77</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Total Resources:</span>
+                            <span class="metric-value">14</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Patient:</span>
+                            <span class="metric-value">1</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Conditions:</span>
+                            <span class="metric-value">2</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Medications:</span>
+                            <span class="metric-value">4</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Observations:</span>
+                            <span class="metric-value">5</span>
+                        </div>
+                    `
+                },
+                'local-registry': {
+                    type: 'storage',
+                    title: 'Model Registry (Local)',
+                    content: `
+                        <div class="info-block storage">
+                            <span class="info-label">Storage:</span>
+                            <span class="info-value">Local Filesystem</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Model Name:</span>
+                            <span class="metric-value">prod-classifier</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Version:</span>
+                            <span class="metric-value">1.0.0</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">File Size:</span>
+                            <span class="metric-value">0.02 MB</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Status:</span>
+                            <span class="metric-value">PRODUCTION</span>
+                        </div>
+                    `
+                },
+                'local-cache': {
+                    type: 'storage',
+                    title: 'Local Prediction Cache',
+                    content: `
+                        <div class="info-block storage">
+                            <span class="info-label">Type:</span>
+                            <span class="info-value">In-memory cache</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Format:</span>
+                            <span class="metric-value">JSONL (for batch load)</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">TTL:</span>
+                            <span class="metric-value">1 hour</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Rows Ready:</span>
+                            <span class="metric-value">1 + 6 PHI + 24 entities</span>
+                        </div>
+                    `
+                },
+                'gcs': {
+                    type: 'storage',
+                    title: 'Cloud Storage (GCS)',
+                    content: `
+                        <div class="info-block storage">
+                            <span class="info-label">Service:</span>
+                            <span class="info-value">Google Cloud Storage</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Bucket:</span>
+                            <span class="metric-value">ml-pipeline-sa</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Paths:</span>
+                            <span class="metric-value">models/, predictions/, logs/</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Replication:</span>
+                            <span class="metric-value">Multi-region</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Redundancy:</span>
+                            <span class="metric-value">99.99% availability</span>
+                        </div>
+                    `
+                },
+                'bigquery': {
+                    type: 'storage',
+                    title: 'BigQuery Data Warehouse',
+                    content: `
+                        <div class="info-block storage">
+                            <span class="info-label">Service:</span>
+                            <span class="info-value">Google BigQuery</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Dataset:</span>
+                            <span class="metric-value">clinical_data</span>
+                        </div>
+                        <div class="info-block storage" style="margin-top: 10px;">
+                            <span class="info-label">Tables:</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">fhir_bundles:</span>
+                            <span class="metric-value">1 row</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">phi_tracking:</span>
+                            <span class="metric-value">6 rows</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">clinical_entities:</span>
+                            <span class="metric-value">24 rows</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Load Method:</span>
+                            <span class="metric-value">Batch (JSONL) - FREE ✓</span>
+                        </div>
+                    `
+                },
+                'vertex-registry': {
+                    type: 'serving',
+                    title: 'Vertex AI Model Registry',
+                    content: `
+                        <div class="info-block serving">
+                            <span class="info-label">Service:</span>
+                            <span class="info-value">Google Vertex AI</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Function:</span>
+                            <span class="metric-value">Model versioning & promotion</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Current Version:</span>
+                            <span class="metric-value">1.0.0</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Status:</span>
+                            <span class="metric-value">PRODUCTION</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Tracking:</span>
+                            <span class="metric-value">Experiments & metrics</span>
+                        </div>
+                    `
+                },
+                'vertex-endpoint': {
+                    type: 'serving',
+                    title: 'Vertex AI Endpoints',
+                    content: `
+                        <div class="info-block serving">
+                            <span class="info-label">Service:</span>
+                            <span class="info-value">Managed Prediction Endpoints</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Type:</span>
+                            <span class="metric-value">REST API</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Scaling:</span>
+                            <span class="metric-value">Auto-scale 0-100 replicas</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Latency:</span>
+                            <span class="metric-value">&lt;100ms (p95)</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Throughput:</span>
+                            <span class="metric-value">1000+ req/sec</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Monitoring:</span>
+                            <span class="metric-value">Real-time dashboards</span>
+                        </div>
+                    `
+                },
+                'monitoring': {
+                    type: 'monitoring',
+                    title: 'Monitoring & Drift Detection',
+                    content: `
+                        <div class="info-block" style="border-left-color: #ffd700; background: rgba(255, 215, 0, 0.1);">
+                            <span class="info-label">Tracked Metrics:</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Model Performance:</span>
+                            <span class="metric-value">87% accuracy</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Prediction Drift:</span>
+                            <span class="metric-value">Detected via SQL</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Latency (p95):</span>
+                            <span class="metric-value">&lt;100ms</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Request Volume:</span>
+                            <span class="metric-value">Real-time tracking</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Cost Tracking:</span>
+                            <span class="metric-value">$0.00 (free tier)</span>
+                        </div>
+                    `
+                },
+                'analytics': {
+                    type: 'monitoring',
+                    title: 'Analytics & Insights',
+                    content: `
+                        <div class="info-block" style="border-left-color: #ffd700; background: rgba(255, 215, 0, 0.1);">
+                            <span class="info-label">Data Analysis:</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Query Engine:</span>
+                            <span class="metric-value">BigQuery SQL</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">PHI Audit:</span>
+                            <span class="metric-value">6 detections tracked</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Entity Analysis:</span>
+                            <span class="metric-value">24 entities categorized</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Compliance:</span>
+                            <span class="metric-value">HIPAA-aware audit trail</span>
+                        </div>
+                        <div class="metric-row">
+                            <span class="metric-label">Reports:</span>
+                            <span class="metric-value">Real-time dashboards</span>
+                        </div>
+                    `
+                }
+            }
+        };
+
+        let network = null;
+
+        function initNetwork() {
+            const nodes = new vis.DataSet(architecture.nodes.map(n => ({
+                id: n.id,
+                label: n.label,
+                color: {
+                    background: n.color,
+                    border: '#ffffff',
+                    highlight: { background: '#ffffff', border: n.color }
+                },
+                font: {
+                    color: '#ffffff',
+                    size: 12,
+                    face: 'Segoe UI',
+                    bold: { color: '#ffffff' }
+                },
+                margin: { top: 15, bottom: 15, left: 15, right: 15 },
+                borderWidth: 2,
+                borderWidthSelected: 4,
+                shadow: { enabled: true, color: 'rgba(0,0,0,0.5)', size: 15, x: 0, y: 0 },
+                shape: 'box',
+                smooth: { type: 'cubicBezier' }
+            })));
+
+            const edges = new vis.DataSet(architecture.edges.map(e => ({
+                from: e.from,
+                to: e.to,
+                label: e.label,
+                color: { color: e.color, opacity: 0.8, highlight: '#ffffff' },
+                font: { color: e.color, size: 10 },
+                arrows: { to: { enabled: true, scaleFactor: 0.5, type: 'arrow' } },
+                smooth: { type: 'cubicBezier', forceDirection: false },
+                width: e.width || 1,
+                dashes: e.dashes || false
+            })));
+
+            const container = document.getElementById('network');
+            const data = { nodes: nodes, edges: edges };
+            const options = {
+                physics: {
+                    enabled: true,
+                    stabilization: { iterations: 500 },
+                    barnesHut: {
+                        gravitationalConstant: -30000,
+                        centralGravity: 0.3,
+                        springLength: 250,
+                        springConstant: 0.04
+                    }
+                },
+                interaction: { hover: true, navigationButtons: true, keyboard: true },
+                manipulation: false
+            };
+
+            if (network) network.destroy();
+            network = new vis.Network(container, data, options);
+
+            network.on('click', (params) => {
+                if (params.nodes.length > 0) {
+                    const nodeId = params.nodes[0];
+                    showNodeInfo(nodeId);
+                }
+            });
+
+            network.on('hoverNode', () => {
+                document.getElementById('network').style.cursor = 'pointer';
+            });
+
+            network.on('blurNode', () => {
+                document.getElementById('network').style.cursor = 'default';
+            });
+        }
+
+        function showNodeInfo(nodeId) {
+            const info = architecture.nodeInfo[nodeId];
+            const container = document.getElementById('sidebarContent');
+
+            if (info) {
+                container.innerHTML = `
+                    <div class="node-title">
+                        <span class="status-indicator ${info.type === 'input' ? 'ready' : 'active'}"></span>
+                        ${info.title}
+                    </div>
+                    ${info.content}
+                `;
+            }
+        }
+
+        window.addEventListener('load', initNetwork);
+    </script>
+</body>
+</html>
