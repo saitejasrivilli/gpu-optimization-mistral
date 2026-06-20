@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Flow Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet" type="text/css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(26, 26, 46, 0.95);
+            padding: 20px;
+            border-bottom: 2px solid #0f3460;
+            z-index: 100;
+        }
+
+        .header h1 {
+            color: #00d4ff;
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #888;
+            font-size: 12px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .tab-btn {
+            padding: 8px 16px;
+            background: #0f3460;
+            border: 2px solid #0f3460;
+            color: #e0e0e0;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+
+        .tab-btn.active {
+            background: #00d4ff;
+            color: #1a1a2e;
+            border-color: #00d4ff;
+        }
+
+        .tab-btn:hover {
+            border-color: #00d4ff;
+        }
+
+        .content {
+            display: flex;
+            margin-top: 100px;
+            height: calc(100vh - 100px);
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .canvas-container {
+            flex: 1;
+            background: rgba(15, 52, 96, 0.3);
+            border-radius: 8px;
+            border: 1px solid #0f3460;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #network {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(15, 52, 96, 0.1) 0%, rgba(26, 26, 46, 0.2) 100%);
+        }
+
+        .sidebar {
+            width: 350px;
+            background: rgba(15, 52, 96, 0.3);
+            border: 1px solid #0f3460;
+            border-radius: 8px;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .sidebar h3 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .log-entry {
+            background: rgba(15, 52, 96, 0.5);
+            border-left: 3px solid #00d4ff;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .log-entry.step {
+            border-left-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .log-entry.metric {
+            border-left-color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .log-entry.error {
+            border-left-color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+        }
+
+        .log-entry.success {
+            border-left-color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .log-label {
+            color: #00d4ff;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .log-metric {
+            color: #00ff88;
+            margin: 4px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #00d4ff;
+            color: #1a1a2e;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .status-badge.running {
+            background: #ff9800;
+            animation: pulse 1.5s infinite;
+        }
+
+        .status-badge.completed {
+            background: #00ff88;
+        }
+
+        .status-badge.error {
+            background: #ff4444;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 52, 96, 0.2);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00d4ff;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00b8d4;
+        }
+
+        .data-flow {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #0f3460;
+        }
+
+        .data-item {
+            background: rgba(0, 212, 255, 0.1);
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 3px;
+            font-size: 11px;
+            font-family: 'Courier New', monospace;
+            color: #00ff88;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>System Flow Dashboard</h1>
+        <p>Click on nodes to view detailed logs and metrics</p>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchFlow('ml')">ML Pipeline</button>
+            <button class="tab-btn" onclick="switchFlow('clinical')">Clinical NLP</button>
+            <button class="tab-btn" onclick="switchFlow('gcp')">GCP Integration</button>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="canvas-container">
+            <div id="network"></div>
+        </div>
+        <div class="sidebar">
+            <h3>Logs & Metrics</h3>
+            <div id="logContainer">
+                <div class="log-entry">Click on a node to view details</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentFlow = 'ml';
+        let network = null;
+
+        const flows = {
+            ml: {
+                nodes: [
+                    { id: 1, label: 'Generate Data\n(500 samples, 20 features)', color: '#0f3460' },
+                    { id: 2, label: 'Train Model\n(3 epochs)', color: '#0f3460' },
+                    { id: 3, label: 'Save to Registry\n(v1.0.0)', color: '#0f3460' },
+                    { id: 4, label: 'Load from Registry', color: '#0f3460' },
+                    { id: 5, label: 'Make Predictions\n(3 samples)', color: '#0f3460' },
+                    { id: 6, label: 'Promote to Production', color: '#0f3460' }
+                ],
+                edges: [
+                    { from: 1, to: 2, label: 'X_train: (400, 20)\nX_test: (100, 20)' },
+                    { from: 2, to: 3, label: 'Model + metrics' },
+                    { from: 3, to: 4, label: 'prod-classifier:1.0.0' },
+                    { from: 4, to: 5, label: 'Loaded model' },
+                    { from: 5, to: 6, label: 'Predictions: [0.14, 1.0, 0.96]' }
+                ],
+                logs: {
+                    1: [
+                        { type: 'step', label: '[1/6] GENERATE DATA', text: 'Creating synthetic dataset' },
+                        { type: 'metric', label: 'Train shape', text: '(400, 20)' },
+                        { type: 'metric', label: 'Test shape', text: '(100, 20)' },
+                        { type: 'success', label: 'Status', text: '✓ Data ready' }
+                    ],
+                    2: [
+                        { type: 'step', label: '[2/6] TRAIN MODEL (3 epochs)', text: 'Training with Adam optimizer' },
+                        { type: 'metric', label: 'Epoch 1', text: 'loss=0.5289, acc=87.00%, f1=0.8762' },
+                        { type: 'metric', label: 'Epoch 2', text: 'loss=0.2635, acc=88.00%, f1=0.8846' },
+                        { type: 'metric', label: 'Epoch 3', text: 'loss=0.1865, acc=87.00%, f1=0.8762' },
+                        { type: 'success', label: 'Status', text: '✓ Training complete' }
+                    ],
+                    3: [
+                        { type: 'step', label: '[3/6] SAVE TO REGISTRY', text: 'Saving model to local filesystem' },
+                        { type: 'metric', label: 'Model name', text: 'prod-classifier' },
+                        { type: 'metric', label: 'Version', text: '1.0.0' },
+                        { type: 'metric', label: 'File size', text: '0.02 MB' },
+                        { type: 'success', label: 'Status', text: '✓ Saved model prod-classifier:1.0.0' }
+                    ],
+                    4: [
+                        { type: 'step', label: '[4/6] LOAD FROM REGISTRY', text: 'Loading saved model' },
+                        { type: 'metric', label: 'Model type', text: 'SimpleNN' },
+                        { type: 'metric', label: 'Weights', text: 'Restored from disk' },
+                        { type: 'success', label: 'Status', text: '✓ Loaded: SimpleNN' }
+                    ],
+                    5: [
+                        { type: 'step', label: '[5/6] MAKE PREDICTIONS', text: 'Running inference on test samples' },
+                        { type: 'metric', label: 'Sample 1', text: '[0.1354] → 13.54% probability' },
+                        { type: 'metric', label: 'Sample 2', text: '[1.0000] → 100% probability' },
+                        { type: 'metric', label: 'Sample 3', text: '[0.9588] → 95.88% probability' },
+                        { type: 'success', label: 'Status', text: '✓ Predictions complete' }
+                    ],
+                    6: [
+                        { type: 'step', label: '[6/6] PROMOTE TO PRODUCTION', text: 'Marking model as production-ready' },
+                        { type: 'metric', label: 'Version', text: 'prod-classifier:1.0.0' },
+                        { type: 'metric', label: 'Status', text: 'PRODUCTION' },
+                        { type: 'success', label: 'Result', text: '✓ ML-PIPELINE TEST COMPLETE' }
+                    ]
+                }
+            },
+            clinical: {
+                nodes: [
+                    { id: 1, label: 'Raw Clinical Note\n(562 chars)', color: '#0f3460' },
+                    { id: 2, label: 'Process Note\n(Pipeline)', color: '#0f3460' },
+                    { id: 3, label: 'De-Identification\n(PHI Masking)', color: '#0f3460' },
+                    { id: 4, label: 'NER Extraction\n(Entities)', color: '#0f3460' },
+                    { id: 5, label: 'FHIR Bundle\nGeneration', color: '#0f3460' },
+                    { id: 6, label: 'BigQuery Export\n(Batch Ready)', color: '#0f3460' },
+                    { id: 7, label: 'Batch Load\n(Free Tier)', color: '#0f3460' }
+                ],
+                edges: [
+                    { from: 1, to: 2, label: 'Raw text' },
+                    { from: 2, to: 3, label: 'De-identification' },
+                    { from: 3, to: 4, label: 'Masked text' },
+                    { from: 4, to: 5, label: '24 entities' },
+                    { from: 5, to: 6, label: '14 FHIR resources' },
+                    { from: 6, to: 7, label: 'JSONL format' }
+                ],
+                logs: {
+                    1: [
+                        { type: 'step', label: '[1/7] RAW INPUT', text: 'Clinical note with patient info' },
+                        { type: 'metric', label: 'Length', text: '562 characters' },
+                        { type: 'metric', label: 'Content', text: 'Patient info, medications, labs' },
+                        { type: 'metric', label: 'PHI Status', text: 'Contains PHI - needs masking' }
+                    ],
+                    2: [
+                        { type: 'step', label: '[2/7] PROCESS NOTE', text: 'Running full pipeline' },
+                        { type: 'metric', label: 'De-ID module', text: 'Loaded ✓' },
+                        { type: 'metric', label: 'NER model', text: 'Loaded ✓' },
+                        { type: 'success', label: 'Status', text: '✓ Processed' }
+                    ],
+                    3: [
+                        { type: 'step', label: '[3/7] DE-IDENTIFICATION', text: 'Pattern matching & masking' },
+                        { type: 'metric', label: 'John Smith', text: '→ [PATIENT]' },
+                        { type: 'metric', label: '03/15/1960', text: '→ [DATE]' },
+                        { type: 'metric', label: '87654321', text: '→ [ID]' },
+                        { type: 'metric', label: 'PHI spans found', text: '6 total' },
+                        { type: 'success', label: 'Status', text: '✓ De-identification complete' }
+                    ],
+                    4: [
+                        { type: 'step', label: '[4/7] NER EXTRACTION', text: 'Named entity recognition' },
+                        { type: 'metric', label: 'Total entities', text: '24 detected' },
+                        { type: 'metric', label: 'Diagnoses', text: '5 (Type 2 Diabetes, Hypertension, CAD...)' },
+                        { type: 'metric', label: 'Confidence', text: 'avg 0.95' },
+                        { type: 'success', label: 'Status', text: '✓ Extraction complete' }
+                    ],
+                    5: [
+                        { type: 'step', label: '[5/7] FHIR BUNDLE', text: 'Healthcare standard format' },
+                        { type: 'metric', label: 'Bundle ID', text: 'bundle-9e353d77' },
+                        { type: 'metric', label: 'Resources', text: '14 total' },
+                        { type: 'metric', label: 'Patient', text: '1' },
+                        { type: 'metric', label: 'Conditions', text: '2' },
+                        { type: 'metric', label: 'Medications', text: '4' },
+                        { type: 'metric', label: 'Observations', text: '5' },
+                        { type: 'success', label: 'Status', text: '✓ FHIR R4 compliant' }
+                    ],
+                    6: [
+                        { type: 'step', label: '[6/7] BIGQUERY EXPORT', text: 'Prepare tables for batch load' },
+                        { type: 'metric', label: 'fhir_bundles', text: '1 row ready' },
+                        { type: 'metric', label: 'phi_tracking', text: '6 rows (audit trail)' },
+                        { type: 'metric', label: 'clinical_entities', text: '24 rows (NER results)' },
+                        { type: 'success', label: 'Status', text: '✓ Export ready' }
+                    ],
+                    7: [
+                        { type: 'step', label: '[7/7] BATCH LOAD', text: 'Free tier compatible' },
+                        { type: 'metric', label: 'Format', text: 'JSONL (newline-delimited JSON)' },
+                        { type: 'metric', label: 'Method', text: 'load_table_from_file()' },
+                        { type: 'metric', label: 'Cost', text: 'FREE ✓' },
+                        { type: 'success', label: 'Result', text: '✓ CLINICAL-NLP TEST COMPLETE' }
+                    ]
+                }
+            },
+            gcp: {
+                nodes: [
+                    { id: 1, label: 'Check GCP Credentials', color: '#0f3460' },
+                    { id: 2, label: 'Process Clinical Note', color: '#0f3460' },
+                    { id: 3, label: 'Initialize BigQuery\nExporter', color: '#0f3460' },
+                    { id: 4, label: 'Batch Load\n(JSONL)', color: '#0f3460' },
+                    { id: 5, label: 'Summary &\nVerification', color: '#0f3460' }
+                ],
+                edges: [
+                    { from: 1, to: 2, label: 'Credentials valid' },
+                    { from: 2, to: 3, label: '10 entities, 1 PHI' },
+                    { from: 3, to: 4, label: 'Exporter ready' },
+                    { from: 4, to: 5, label: 'Job submitted' }
+                ],
+                logs: {
+                    1: [
+                        { type: 'step', label: '[1/5] CHECK GCP CREDENTIALS', text: 'Validating GCP setup' },
+                        { type: 'metric', label: 'Project', text: 'ml-pipeline-sa' },
+                        { type: 'metric', label: 'Credentials file', text: '/Users/.../sa-key.json' },
+                        { type: 'success', label: 'Status', text: '✓ Credentials OK' }
+                    ],
+                    2: [
+                        { type: 'step', label: '[2/5] PROCESS NOTE', text: 'Clinical NLP pipeline' },
+                        { type: 'metric', label: 'Entities extracted', text: '10' },
+                        { type: 'metric', label: 'PHI detected', text: '1 (Jane D. → [PATIENT])' },
+                        { type: 'success', label: 'Status', text: '✓ Processed' }
+                    ],
+                    3: [
+                        { type: 'step', label: '[3/5] INITIALIZE EXPORTER', text: 'BigQuery connection' },
+                        { type: 'metric', label: 'Client', text: 'Connected ✓' },
+                        { type: 'metric', label: 'Dataset', text: 'clinical_data' },
+                        { type: 'metric', label: 'Tables verified', text: 'fhir_bundles, phi_tracking, clinical_entities' },
+                        { type: 'success', label: 'Status', text: '✓ Exporter ready' }
+                    ],
+                    4: [
+                        { type: 'step', label: '[4/5] BATCH LOAD', text: 'Submit to BigQuery' },
+                        { type: 'metric', label: 'Format', text: 'JSONL (free tier)' },
+                        { type: 'metric', label: 'Method', text: 'load_table_from_file()' },
+                        { type: 'metric', label: 'Job ID', text: 'cbfe086c-2492-4870-a834-4fde0b1636bd' },
+                        { type: 'metric', label: 'Cost', text: '$0.00 (free tier)' },
+                        { type: 'success', label: 'Status', text: '✓ Batch load job SUBMITTED' }
+                    ],
+                    5: [
+                        { type: 'step', label: '[5/5] SUMMARY', text: 'System verification complete' },
+                        { type: 'success', label: '✓ GCP credentials OK', text: '' },
+                        { type: 'success', label: '✓ Clinical NLP OK', text: '' },
+                        { type: 'success', label: '✓ BigQuery integration OK', text: '' },
+                        { type: 'success', label: '✓ Batch load (free tier)', text: '' },
+                        { type: 'success', label: 'Result', text: '✓ GCP INTEGRATION TEST COMPLETE' }
+                    ]
+                }
+            }
+        };
+
+        function initNetwork() {
+            const flow = flows[currentFlow];
+            const nodes = new vis.DataSet(flow.nodes.map(n => ({
+                ...n,
+                shape: 'box',
+                font: { color: '#e0e0e0', size: 13 },
+                margin: { top: 10, bottom: 10, left: 10, right: 10 },
+                borderWidth: 2,
+                borderWidthSelected: 3,
+                shadow: { enabled: true, color: 'rgba(0,212,255,0.5)', size: 10, x: 0, y: 0 }
+            })));
+
+            const edges = new vis.DataSet(flow.edges.map(e => ({
+                ...e,
+                color: { color: '#00d4ff', highlight: '#00ff88', opacity: 0.8 },
+                font: { color: '#00d4ff', size: 11 },
+                arrows: 'to',
+                smooth: { type: 'cubicBezier' }
+            })));
+
+            const container = document.getElementById('network');
+            const data = { nodes: nodes, edges: edges };
+            const options = {
+                physics: {
+                    enabled: true,
+                    stabilization: { iterations: 200 },
+                    barnesHut: { gravitationalConstant: -20000, centralGravity: 0.3, springLength: 200 }
+                },
+                interaction: { hover: true },
+                manipulation: false
+            };
+
+            if (network) network.destroy();
+            network = new vis.Network(container, data, options);
+
+            network.on('click', (params) => {
+                if (params.nodes.length > 0) {
+                    const nodeId = params.nodes[0];
+                    showLogs(nodeId);
+                }
+            });
+
+            network.on('hoverNode', () => {
+                document.getElementById('network').style.cursor = 'pointer';
+            });
+
+            network.on('blurNode', () => {
+                document.getElementById('network').style.cursor = 'default';
+            });
+        }
+
+        function showLogs(nodeId) {
+            const logs = flows[currentFlow].logs[nodeId];
+            const container = document.getElementById('logContainer');
+            container.innerHTML = '';
+
+            if (logs) {
+                logs.forEach(log => {
+                    const entry = document.createElement('div');
+                    entry.className = `log-entry ${log.type}`;
+                    entry.innerHTML = `
+                        <span class="log-label">${log.label}</span>
+                        ${log.text ? `<div>${log.text}</div>` : ''}
+                    `;
+                    container.appendChild(entry);
+                });
+            }
+        }
+
+        function switchFlow(flowName) {
+            currentFlow = flowName;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            initNetwork();
+        }
+
+        // Initialize on load
+        window.addEventListener('load', initNetwork);
+    </script>
+</body>
+</html>
