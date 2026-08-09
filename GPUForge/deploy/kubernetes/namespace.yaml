@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gpuforge
+  labels:
+    app: gpuforge
+    app.kubernetes.io/managed-by: gpuforge

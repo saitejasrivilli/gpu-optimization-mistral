@@ -1,0 +1,50 @@
+# Minimal RBAC for whatever process runs internal/k8sexec.KubernetesExecutor
+# (there is no standalone GPUForge controller Deployment yet — no HTTP/gRPC
+# entrypoint exists in this phase; this ServiceAccount is for local/manual
+# use, e.g. `go run` against this kubeconfig, or a future controller
+# Deployment to bind to).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gpuforge-executor
+  namespace: gpuforge
+  labels:
+    app: gpuforge
+    app.kubernetes.io/managed-by: gpuforge
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: gpuforge-executor
+  namespace: gpuforge
+  labels:
+    app: gpuforge
+    app.kubernetes.io/managed-by: gpuforge
+rules:
+  # Everything KubernetesExecutor actually does: create/get/delete Jobs it
+  # owns, and list/watch for status reconciliation. No permissions beyond
+  # this namespace, and no permissions on any resource type the executor
+  # doesn't touch.
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: gpuforge-executor
+  namespace: gpuforge
+  labels:
+    app: gpuforge
+    app.kubernetes.io/managed-by: gpuforge
+subjects:
+  - kind: ServiceAccount
+    name: gpuforge-executor
+    namespace: gpuforge
+roleRef:
+  kind: Role
+  name: gpuforge-executor
+  apiGroup: rbac.authorization.k8s.io

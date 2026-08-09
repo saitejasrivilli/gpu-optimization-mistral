@@ -1,0 +1,49 @@
+# Hand-written example of exactly what internal/k8sexec.KubernetesExecutor.
+# buildJob generates for a 1-GPU workload — useful for `kubectl apply -f`
+# manual testing without going through GPUForge's Go API at all. Not
+# applied automatically by anything; it's a reference/debugging artifact.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gpuforge-example-workload
+  namespace: gpuforge
+  labels:
+    app: gpuforge
+    component: workload-executor
+    app.kubernetes.io/managed-by: gpuforge
+  annotations:
+    gpuforge.io/workload-id: example-workload
+spec:
+  backoffLimit: 0 # GPUForge's own orchestrator owns retries, not Kubernetes
+  template:
+    metadata:
+      labels:
+        app: gpuforge
+        component: workload-executor
+        app.kubernetes.io/managed-by: gpuforge
+      annotations:
+        gpuforge.io/workload-id: example-workload
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: workload
+          image: gpuforge-workload:dev
+          env:
+            - name: GPUFORGE_WORKLOAD_ID
+              value: example-workload
+            - name: GPUFORGE_WORKER_ID
+              value: example-worker
+            - name: GPUFORGE_GPU_IDS
+              value: example-worker-gpu-0
+          resources:
+            limits:
+              # Only present on clusters with the NVIDIA device plugin
+              # installed. On a plain kind cluster with no GPU hardware,
+              # remove this line or the pod will stay Pending forever
+              # (Unschedulable) — see docs/kubernetes-execution.md.
+              nvidia.com/gpu: "1"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            privileged: false
