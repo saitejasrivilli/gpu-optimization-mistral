@@ -6,13 +6,15 @@ import "time"
 // *GPU it carries no mutex and is safe to pass across goroutines/policies
 // without synchronization.
 type GPUSnapshot struct {
-	ID           string
-	WorkerID     string
-	Model        string
-	HardwareMode HardwareMode
-	Capability   GPUCapability
-	State        GPUState
-	Validation   ValidationResult
+	ID              string
+	WorkerID        string
+	Model           string
+	HardwareMode    HardwareMode
+	Capability      GPUCapability
+	Topology        GPUTopology
+	State           GPUState
+	Validation      ValidationResult
+	AllocationState GPUAllocationState
 }
 
 // WorkerSnapshot is a read-only copy of a worker's state at snapshot time.
@@ -44,13 +46,15 @@ func (w *Worker) Snapshot() WorkerSnapshot {
 	}
 	for _, g := range gpus {
 		out.GPUs = append(out.GPUs, GPUSnapshot{
-			ID:           g.ID,
-			WorkerID:     g.WorkerID,
-			Model:        g.Model,
-			HardwareMode: g.HardwareMode,
-			Capability:   g.Capability,
-			State:        g.State,
-			Validation:   g.Validation,
+			ID:              g.ID,
+			WorkerID:        g.WorkerID,
+			Model:           g.Model,
+			HardwareMode:    g.HardwareMode,
+			Capability:      g.Capability,
+			Topology:        g.Topology,
+			State:           g.State,
+			Validation:      g.Validation,
+			AllocationState: g.AllocationState,
 		})
 	}
 	return out

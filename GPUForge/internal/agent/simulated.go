@@ -24,6 +24,9 @@ var ErrEmptyWorkerID = errors.New("agent: worker id required")
 type GPUSpec struct {
 	Model      string
 	Capability domain.GPUCapability
+	// Topology is fixed configuration, per ADR-003: simulated topology is a
+	// deterministic input, not a randomly generated approximation.
+	Topology domain.GPUTopology
 }
 
 // SimulatedConfig configures a deterministic simulated worker. Two agents
@@ -93,6 +96,7 @@ func (a *SimulatedAgent) Discover(ctx context.Context) (DiscoveryResult, error) 
 			ID:         a.gpuIDs[i],
 			Model:      spec.Model,
 			Capability: spec.Capability,
+			Topology:   spec.Topology,
 		}
 	}
 	return DiscoveryResult{

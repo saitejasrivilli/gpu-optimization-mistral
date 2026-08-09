@@ -18,6 +18,11 @@ type GPUDiscovery struct {
 	ID         string
 	Model      string
 	Capability domain.GPUCapability
+	// Topology is only populated when the agent actually discovered it.
+	// SimulatedAgent reports the topology from its deterministic config;
+	// NVIDIAAgent (Phase 2/3) does not yet parse `nvidia-smi topo -m`, so it
+	// always reports the zero value (unknown) rather than a guess.
+	Topology domain.GPUTopology
 }
 
 // DiscoveryResult is what an agent reports about the worker it runs on.

@@ -132,3 +132,53 @@ func TestAllocation_ReleaseReasonRequired(t *testing.T) {
 		t.Fatalf("expected ErrReasonRequired, got %v", err)
 	}
 }
+
+// TestInvariant_CannotDoubleBookGPU is an explicit invariant test: a GPU
+// already held by one allocation cannot be granted to a second.
+func TestInvariant_CannotDoubleBookGPU(t *testing.T) {
+	wl1, _ := NewWorkload("wl1")
+	wl2, _ := NewWorkload("wl2")
+	w := readyWorkerWithGPUs(t, "g1")
+
+	if _, err := NewAllocation(wl1, w, []string{"g1"}, time.Now()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := NewAllocation(wl2, w, []string{"g1"}, time.Now()); !errors.Is(err, ErrInvalidAllocation) {
+		t.Fatalf("expected double-booked GPU to be rejected, got %v", err)
+	}
+	g, _ := w.GPU("g1")
+	if g.AllocationState != GPUAllocated {
+		t.Fatalf("expected GPU to remain ALLOCATED after rejected second allocation, got %s", g.AllocationState)
+	}
+}
+
+func TestAllocation_ReleaseFreesGPUForReallocation(t *testing.T) {
+	wl1, _ := NewWorkload("wl1")
+	wl2, _ := NewWorkload("wl2")
+	w := readyWorkerWithGPUs(t, "g1")
+
+	a1, err := NewAllocation(wl1, w, []string{"g1"}, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := a1.Release("workload completed", time.Now()); err != nil {
+		t.Fatal(err)
+	}
+	g, _ := w.GPU("g1")
+	if g.AllocationState != GPUFree {
+		t.Fatalf("expected GPU FREE after release, got %s", g.AllocationState)
+	}
+	if _, err := NewAllocation(wl2, w, []string{"g1"}, time.Now()); err != nil {
+		t.Fatalf("expected freed GPU to be reallocatable, got %v", err)
+	}
+}
+
+func TestNewGPU_StartsFreeAllocationState(t *testing.T) {
+	g, err := NewGPU("g1", "w1", "A100", HardwareModeSimulated, GPUCapability{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if g.AllocationState != GPUFree {
+		t.Fatalf("expected new GPU to start FREE, got %s", g.AllocationState)
+	}
+}

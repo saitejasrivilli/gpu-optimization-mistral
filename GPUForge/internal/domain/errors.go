@@ -9,14 +9,15 @@ import (
 // concrete *TransitionError / *AllocationError / *HardwareModeError types
 // below to recover details.
 var (
-	ErrReasonRequired            = errors.New("domain: transition reason required")
-	ErrEmptyID                   = errors.New("domain: id required")
-	ErrInvalidHardwareMode       = errors.New("domain: invalid hardware mode")
-	ErrInvalidWorkerTransition   = errors.New("domain: invalid worker state transition")
-	ErrInvalidWorkloadTransition = errors.New("domain: invalid workload state transition")
-	ErrInvalidAllocation         = errors.New("domain: invalid allocation")
-	ErrAlreadyReleased           = errors.New("domain: allocation already released")
-	ErrValidationReasonRequired  = errors.New("domain: validation failure reason required")
+	ErrReasonRequired              = errors.New("domain: transition reason required")
+	ErrEmptyID                     = errors.New("domain: id required")
+	ErrInvalidHardwareMode         = errors.New("domain: invalid hardware mode")
+	ErrInvalidWorkerTransition     = errors.New("domain: invalid worker state transition")
+	ErrInvalidWorkloadTransition   = errors.New("domain: invalid workload state transition")
+	ErrInvalidAllocation           = errors.New("domain: invalid allocation")
+	ErrAlreadyReleased             = errors.New("domain: allocation already released")
+	ErrValidationReasonRequired    = errors.New("domain: validation failure reason required")
+	ErrInvalidWorkloadRequirements = errors.New("domain: invalid workload requirements")
 )
 
 // WorkerTransitionError carries the detail of a rejected worker transition.
@@ -67,3 +68,16 @@ func (e *HardwareModeError) Error() string {
 }
 
 func (e *HardwareModeError) Unwrap() error { return ErrInvalidHardwareMode }
+
+// RequirementsError carries the detail of a structurally invalid
+// WorkloadRequirements value (as opposed to one that's merely unsatisfiable
+// against a given cluster — that's a scheduler-package error, not this one).
+type RequirementsError struct {
+	Reason string
+}
+
+func (e *RequirementsError) Error() string {
+	return fmt.Sprintf("domain: invalid workload requirements: %s", e.Reason)
+}
+
+func (e *RequirementsError) Unwrap() error { return ErrInvalidWorkloadRequirements }

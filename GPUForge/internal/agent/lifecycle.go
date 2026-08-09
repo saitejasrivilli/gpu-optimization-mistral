@@ -34,6 +34,7 @@ func Register(ctx context.Context, ag WorkerAgent, now time.Time) (*domain.Worke
 		if err != nil {
 			return nil, fmt.Errorf("agent: register: constructing GPU %s: %w", gd.ID, err)
 		}
+		g.Topology = gd.Topology // set before AddGPU, while g is not yet shared
 		if err := w.AddGPU(g); err != nil {
 			return nil, fmt.Errorf("agent: register: attaching GPU %s: %w", gd.ID, err)
 		}

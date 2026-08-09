@@ -44,6 +44,17 @@ Worker.Snapshot() -> WorkerSnapshot -> ClusterSnapshot
 
 `Worker.UpdateGPUState` and `Worker.UpdateGPUValidation` (added in Phase 2, worker.go) are the only sanctioned way to mutate a GPU's runtime/validation state after attachment — both mutex-guarded, so the agent layer (`internal/agent`, see docs/agent.md) never reaches into a `*GPU`'s fields directly. This is additive; it does not change any transition table or invariant from Phase 1.
 
+## Phase 3 additions
+
+Phase 3 (the scheduler, docs/scheduling-engine.md) needed two pieces of GPU data the domain model didn't yet carry, both additive — no existing transition table, invariant, or exported behavior changed:
+
+- **`GPU.AllocationState`** (`FREE`/`ALLOCATED`) — the fifth concept docs/architecture.md's data model always called out (identity/capability/runtime-state/validation-state/**allocation-state**) but that had no consumer until the scheduler needed to know which GPUs are actually selectable. Mutated only via `Worker.MarkGPUsAllocated`/`Worker.MarkGPUsReleased` (atomic: all-or-nothing across a GPU set, mutex-guarded). `Allocation.NewAllocation` now calls `MarkGPUsAllocated` and `Allocation.Release` calls `MarkGPUsReleased`, closing a real gap: before this, two `Allocation`s could have been constructed over the same GPU with nothing to stop them (`TestInvariant_CannotDoubleBookGPU` guards against regression).
+- **`GPU.Topology`** (`GPUTopology{NodeID, NVLinkGroup}`) — static, discovered-only placement data consumed by topology-aware scheduling. Empty means unknown; never invented. Populated by the agent layer (`internal/agent`) at discovery time, same as capability.
+
+`ClusterSnapshot`/`GPUSnapshot` (snapshot.go) now carry both fields, since the scheduler operates on snapshots, not live `*Worker`/`*GPU`.
+
+`domain.WorkloadRequirements` (workload_requirements.go) is new: the scheduler's second input alongside `ClusterSnapshot`. See docs/scheduling-engine.md for field-by-field rationale.
+
 ## Deferred to later phases
 
-Scheduling algorithms, gRPC/HTTP transport, Prometheus metrics, Kubernetes/Terraform/Ansible integration, distributed consensus, telemetry storage, autonomous agents — none of this package's business. GPU discovery/capability/state collection and CUDA-adjacent probing (via nvidia-smi) moved from "deferred" to "implemented" in Phase 2 — see docs/agent.md.
+gRPC/HTTP transport, Prometheus metrics, Kubernetes/Terraform/Ansible integration, distributed consensus, telemetry storage, autonomous agents, preemption/eviction logic (fields exist on `WorkloadRequirements`, no behavior yet), multi-node/multi-worker allocations — none of this package's business yet.

@@ -27,6 +27,7 @@ type Allocation struct {
 	GPUIDs     []string
 	CreatedAt  time.Time
 
+	worker        *Worker
 	state         AllocationState
 	releasedAt    time.Time
 	releaseReason string
@@ -39,9 +40,11 @@ type Allocation struct {
 //   - every gpuID must actually belong to worker
 //   - worker must be in an allocatable state (READY or ALLOCATED) — a
 //     QUARANTINED or RETIRED worker can never receive an allocation
+//   - every gpuID must currently be FREE — constructing two allocations
+//     over the same GPU is rejected, atomically, by Worker.MarkGPUsAllocated
 //
-// Selecting *which* GPUs to request is the caller's (future scheduler's)
-// job; this constructor only guards against constructing an invalid claim.
+// Selecting *which* GPUs to request is the caller's (the scheduler's) job;
+// this constructor only guards against constructing an invalid claim.
 func NewAllocation(workload *Workload, worker *Worker, gpuIDs []string, now time.Time) (*Allocation, error) {
 	if workload == nil || workload.ID() == "" {
 		return nil, &AllocationError{Reason: "workload is required"}
@@ -71,11 +74,16 @@ func NewAllocation(workload *Workload, worker *Worker, gpuIDs []string, now time
 	ids := make([]string, len(gpuIDs))
 	copy(ids, gpuIDs)
 
+	if err := worker.MarkGPUsAllocated(ids); err != nil {
+		return nil, err
+	}
+
 	return &Allocation{
 		WorkloadID: workload.ID(),
 		WorkerID:   worker.ID(),
 		GPUIDs:     ids,
 		CreatedAt:  now,
+		worker:     worker,
 		state:      AllocationActive,
 	}, nil
 }
@@ -98,6 +106,9 @@ func (a *Allocation) Release(reason string, now time.Time) error {
 	defer a.mu.Unlock()
 	if a.state == AllocationReleased {
 		return ErrAlreadyReleased
+	}
+	if err := a.worker.MarkGPUsReleased(a.GPUIDs); err != nil {
+		return err
 	}
 	a.state = AllocationReleased
 	a.releasedAt = now

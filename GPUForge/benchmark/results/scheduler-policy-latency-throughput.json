@@ -1,0 +1,446 @@
+{
+  "benchmark": "scheduler-policy-latency-throughput",
+  "hardware_mode": "simulated",
+  "go_version": "go1.26.1",
+  "cpu": "Apple M2",
+  "seed": 42,
+  "fleet_model": "ceil(gpu_count/8) workers of 8 GPUs each, 2x 4-GPU NVLink groups per worker, A100/80GB/sm_80, utilization drawn from seeded RNG",
+  "workload_model": "each placement requests GPUCount=1, no memory/CUDA/topology requirement, guaranteed schedulable at every fleet size",
+  "benchtime": "2x (each reported iteration is 2 runs of the full batch, per go test -bench)",
+  "timestamp": "2026-08-09T21:04:01Z",
+  "command": "go test -run xxx -bench . -benchtime=2x ./internal/scheduler/...",
+  "results": [
+    {
+      "policy": "first-fit",
+      "fleet_gpu_count": 8,
+      "batch_size": 100,
+      "iterations": 2,
+      "ns_per_batch": 404166,
+      "ns_per_placement": 4041.66,
+      "placements_per_sec": 247576
+    },
+    {
+      "policy": "first-fit",
+      "fleet_gpu_count": 8,
+      "batch_size": 1000,
+      "iterations": 2,
+      "ns_per_batch": 4122021,
+      "ns_per_placement": 4122.021,
+      "placements_per_sec": 242620
+    },
+    {
+      "policy": "first-fit",
+      "fleet_gpu_count": 8,
+      "batch_size": 10000,
+      "iterations": 2,
+      "ns_per_batch": 26008938,
+      "ns_per_placement": 2600.8938,
+      "placements_per_sec": 384492
+    },
+    {
+      "policy": "first-fit",
+      "fleet_gpu_count": 16,
+      "batch_size": 100,
+      "iterations": 2,
+      "ns_per_batch": 347812,
+      "ns_per_placement": 3478.12,
+      "placements_per_sec": 287666
+    },
+    {
+      "policy": "first-fit",
+      "fleet_gpu_count": 16,
+      "batch_size": 1000,
+      "iterations": 2,
+      "ns_per_batch": 6790938,
+      "ns_per_placement": 6790.938,
+      "placements_per_sec": 147265
+    },
+    {
+      "policy": "first-fit",
+      "fleet_gpu_count": 16,
+      "batch_size": 10000,
+      "iterations": 2,
+      "ns_per_batch": 43477125,
+      "ns_per_placement": 4347.7125,
+      "placements_per_sec": 230019
+    },
+    {
+      "policy": "first-fit",
+      "fleet_gpu_count": 32,
+      "batch_size": 100,
+      "iterations": 2,
+      "ns_per_batch": 622292,
+      "ns_per_placement": 6222.92,
+      "placements_per_sec": 160756
+    },
+    {
+      "policy": "first-fit",
+      "fleet_gpu_count": 32,
+      "batch_size": 1000,
+      "iterations": 2,
+      "ns_per_batch": 8191834,
+      "ns_per_placement": 8191.834,
+      "placements_per_sec": 122080
+    },
+    {
+      "policy": "first-fit",
+      "fleet_gpu_count": 32,
+      "batch_size": 10000,
+      "iterations": 2,
+      "ns_per_batch": 74155167,
+      "ns_per_placement": 7415.5167,
+      "placements_per_sec": 134853
+    },
+    {
+      "policy": "first-fit",
+      "fleet_gpu_count": 64,
+      "batch_size": 100,
+      "iterations": 2,
+      "ns_per_batch": 1342084,
+      "ns_per_placement": 13420.84,
+      "placements_per_sec": 74524
+    },
+    {
+      "policy": "first-fit",
+      "fleet_gpu_count": 64,
+      "batch_size": 1000,
+      "iterations": 2,
+      "ns_per_batch": 13156250,
+      "ns_per_placement": 13156.25,
+      "placements_per_sec": 76012
+    },
+    {
+      "policy": "first-fit",
+      "fleet_gpu_count": 64,
+      "batch_size": 10000,
+      "iterations": 2,
+      "ns_per_batch": 128973334,
+      "ns_per_placement": 12897.3334,
+      "placements_per_sec": 77536
+    },
+    {
+      "policy": "best-fit",
+      "fleet_gpu_count": 8,
+      "batch_size": 100,
+      "iterations": 2,
+      "ns_per_batch": 266292,
+      "ns_per_placement": 2662.92,
+      "placements_per_sec": 375675
+    },
+    {
+      "policy": "best-fit",
+      "fleet_gpu_count": 8,
+      "batch_size": 1000,
+      "iterations": 2,
+      "ns_per_batch": 2831542,
+      "ns_per_placement": 2831.542,
+      "placements_per_sec": 353185
+    },
+    {
+      "policy": "best-fit",
+      "fleet_gpu_count": 8,
+      "batch_size": 10000,
+      "iterations": 2,
+      "ns_per_batch": 28525854,
+      "ns_per_placement": 2852.5854,
+      "placements_per_sec": 350562
+    },
+    {
+      "policy": "best-fit",
+      "fleet_gpu_count": 16,
+      "batch_size": 100,
+      "iterations": 2,
+      "ns_per_batch": 565646,
+      "ns_per_placement": 5656.46,
+      "placements_per_sec": 176822
+    },
+    {
+      "policy": "best-fit",
+      "fleet_gpu_count": 16,
+      "batch_size": 1000,
+      "iterations": 2,
+      "ns_per_batch": 4966792,
+      "ns_per_placement": 4966.792,
+      "placements_per_sec": 201341
+    },
+    {
+      "policy": "best-fit",
+      "fleet_gpu_count": 16,
+      "batch_size": 10000,
+      "iterations": 2,
+      "ns_per_batch": 54397688,
+      "ns_per_placement": 5439.7688,
+      "placements_per_sec": 183833
+    },
+    {
+      "policy": "best-fit",
+      "fleet_gpu_count": 32,
+      "batch_size": 100,
+      "iterations": 2,
+      "ns_per_batch": 949375,
+      "ns_per_placement": 9493.75,
+      "placements_per_sec": 105351
+    },
+    {
+      "policy": "best-fit",
+      "fleet_gpu_count": 32,
+      "batch_size": 1000,
+      "iterations": 2,
+      "ns_per_batch": 10257812,
+      "ns_per_placement": 10257.812,
+      "placements_per_sec": 97490
+    },
+    {
+      "policy": "best-fit",
+      "fleet_gpu_count": 32,
+      "batch_size": 10000,
+      "iterations": 2,
+      "ns_per_batch": 99083062,
+      "ns_per_placement": 9908.3062,
+      "placements_per_sec": 100926
+    },
+    {
+      "policy": "best-fit",
+      "fleet_gpu_count": 64,
+      "batch_size": 100,
+      "iterations": 2,
+      "ns_per_batch": 1894354,
+      "ns_per_placement": 18943.54,
+      "placements_per_sec": 52796
+    },
+    {
+      "policy": "best-fit",
+      "fleet_gpu_count": 64,
+      "batch_size": 1000,
+      "iterations": 2,
+      "ns_per_batch": 18953458,
+      "ns_per_placement": 18953.458,
+      "placements_per_sec": 52762
+    },
+    {
+      "policy": "best-fit",
+      "fleet_gpu_count": 64,
+      "batch_size": 10000,
+      "iterations": 2,
+      "ns_per_batch": 195642604,
+      "ns_per_placement": 19564.2604,
+      "placements_per_sec": 51114
+    },
+    {
+      "policy": "utilization-aware",
+      "fleet_gpu_count": 8,
+      "batch_size": 100,
+      "iterations": 2,
+      "ns_per_batch": 272125,
+      "ns_per_placement": 2721.25,
+      "placements_per_sec": 367647
+    },
+    {
+      "policy": "utilization-aware",
+      "fleet_gpu_count": 8,
+      "batch_size": 1000,
+      "iterations": 2,
+      "ns_per_batch": 2930458,
+      "ns_per_placement": 2930.458,
+      "placements_per_sec": 341270
+    },
+    {
+      "policy": "utilization-aware",
+      "fleet_gpu_count": 8,
+      "batch_size": 10000,
+      "iterations": 2,
+      "ns_per_batch": 30715708,
+      "ns_per_placement": 3071.5708,
+      "placements_per_sec": 325570
+    },
+    {
+      "policy": "utilization-aware",
+      "fleet_gpu_count": 16,
+      "batch_size": 100,
+      "iterations": 2,
+      "ns_per_batch": 574166,
+      "ns_per_placement": 5741.66,
+      "placements_per_sec": 174203
+    },
+    {
+      "policy": "utilization-aware",
+      "fleet_gpu_count": 16,
+      "batch_size": 1000,
+      "iterations": 2,
+      "ns_per_batch": 5709104,
+      "ns_per_placement": 5709.104,
+      "placements_per_sec": 175161
+    },
+    {
+      "policy": "utilization-aware",
+      "fleet_gpu_count": 16,
+      "batch_size": 10000,
+      "iterations": 2,
+      "ns_per_batch": 59033416,
+      "ns_per_placement": 5903.3416,
+      "placements_per_sec": 169397
+    },
+    {
+      "policy": "utilization-aware",
+      "fleet_gpu_count": 32,
+      "batch_size": 100,
+      "iterations": 2,
+      "ns_per_batch": 1080688,
+      "ns_per_placement": 10806.88,
+      "placements_per_sec": 92543
+    },
+    {
+      "policy": "utilization-aware",
+      "fleet_gpu_count": 32,
+      "batch_size": 1000,
+      "iterations": 2,
+      "ns_per_batch": 11485584,
+      "ns_per_placement": 11485.584,
+      "placements_per_sec": 87067
+    },
+    {
+      "policy": "utilization-aware",
+      "fleet_gpu_count": 32,
+      "batch_size": 10000,
+      "iterations": 2,
+      "ns_per_batch": 114077938,
+      "ns_per_placement": 11407.7938,
+      "placements_per_sec": 87660
+    },
+    {
+      "policy": "utilization-aware",
+      "fleet_gpu_count": 64,
+      "batch_size": 100,
+      "iterations": 2,
+      "ns_per_batch": 2220084,
+      "ns_per_placement": 22200.84,
+      "placements_per_sec": 45045
+    },
+    {
+      "policy": "utilization-aware",
+      "fleet_gpu_count": 64,
+      "batch_size": 1000,
+      "iterations": 2,
+      "ns_per_batch": 22388417,
+      "ns_per_placement": 22388.417,
+      "placements_per_sec": 44666
+    },
+    {
+      "policy": "utilization-aware",
+      "fleet_gpu_count": 64,
+      "batch_size": 10000,
+      "iterations": 2,
+      "ns_per_batch": 226223084,
+      "ns_per_placement": 22622.3084,
+      "placements_per_sec": 44204
+    },
+    {
+      "policy": "topology-aware",
+      "fleet_gpu_count": 8,
+      "batch_size": 100,
+      "iterations": 2,
+      "ns_per_batch": 283042,
+      "ns_per_placement": 2830.42,
+      "placements_per_sec": 353487
+    },
+    {
+      "policy": "topology-aware",
+      "fleet_gpu_count": 8,
+      "batch_size": 1000,
+      "iterations": 2,
+      "ns_per_batch": 3372333,
+      "ns_per_placement": 3372.333,
+      "placements_per_sec": 296567
+    },
+    {
+      "policy": "topology-aware",
+      "fleet_gpu_count": 8,
+      "batch_size": 10000,
+      "iterations": 2,
+      "ns_per_batch": 30191562,
+      "ns_per_placement": 3019.1562,
+      "placements_per_sec": 331222
+    },
+    {
+      "policy": "topology-aware",
+      "fleet_gpu_count": 16,
+      "batch_size": 100,
+      "iterations": 2,
+      "ns_per_batch": 530104,
+      "ns_per_placement": 5301.04,
+      "placements_per_sec": 188679
+    },
+    {
+      "policy": "topology-aware",
+      "fleet_gpu_count": 16,
+      "batch_size": 1000,
+      "iterations": 2,
+      "ns_per_batch": 5398312,
+      "ns_per_placement": 5398.312,
+      "placements_per_sec": 185247
+    },
+    {
+      "policy": "topology-aware",
+      "fleet_gpu_count": 16,
+      "batch_size": 10000,
+      "iterations": 2,
+      "ns_per_batch": 55027000,
+      "ns_per_placement": 5502.7,
+      "placements_per_sec": 181730
+    },
+    {
+      "policy": "topology-aware",
+      "fleet_gpu_count": 32,
+      "batch_size": 100,
+      "iterations": 2,
+      "ns_per_batch": 957458,
+      "ns_per_placement": 9574.58,
+      "placements_per_sec": 104461
+    },
+    {
+      "policy": "topology-aware",
+      "fleet_gpu_count": 32,
+      "batch_size": 1000,
+      "iterations": 2,
+      "ns_per_batch": 9687688,
+      "ns_per_placement": 9687.688,
+      "placements_per_sec": 103227
+    },
+    {
+      "policy": "topology-aware",
+      "fleet_gpu_count": 32,
+      "batch_size": 10000,
+      "iterations": 2,
+      "ns_per_batch": 98979812,
+      "ns_per_placement": 9897.9812,
+      "placements_per_sec": 101031
+    },
+    {
+      "policy": "topology-aware",
+      "fleet_gpu_count": 64,
+      "batch_size": 100,
+      "iterations": 2,
+      "ns_per_batch": 1985062,
+      "ns_per_placement": 19850.62,
+      "placements_per_sec": 50380
+    },
+    {
+      "policy": "topology-aware",
+      "fleet_gpu_count": 64,
+      "batch_size": 1000,
+      "iterations": 2,
+      "ns_per_batch": 18936000,
+      "ns_per_placement": 18936.0,
+      "placements_per_sec": 52810
+    },
+    {
+      "policy": "topology-aware",
+      "fleet_gpu_count": 64,
+      "batch_size": 10000,
+      "iterations": 2,
+      "ns_per_batch": 193048500,
+      "ns_per_placement": 19304.85,
+      "placements_per_sec": 51801
+    }
+  ]
+}

@@ -202,3 +202,41 @@ func (w *Worker) UpdateGPUValidation(gpuID string, result ValidationResult) erro
 	g.Validation = result
 	return nil
 }
+
+// MarkGPUsAllocated marks every named GPU ALLOCATED, atomically: if any GPU
+// is missing or already ALLOCATED, no GPU's state is changed and an error
+// is returned. Used by NewAllocation so a scheduler decision can never
+// double-book a GPU that's already held by another allocation.
+func (w *Worker) MarkGPUsAllocated(gpuIDs []string) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	for _, id := range gpuIDs {
+		g, ok := w.gpus[id]
+		if !ok {
+			return &AllocationError{Reason: "GPU " + id + " does not belong to worker " + w.id}
+		}
+		if g.AllocationState == GPUAllocated {
+			return &AllocationError{Reason: "GPU " + id + " is already allocated"}
+		}
+	}
+	for _, id := range gpuIDs {
+		w.gpus[id].AllocationState = GPUAllocated
+	}
+	return nil
+}
+
+// MarkGPUsReleased marks every named GPU FREE, atomically. Used by
+// Allocation.Release.
+func (w *Worker) MarkGPUsReleased(gpuIDs []string) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	for _, id := range gpuIDs {
+		if _, ok := w.gpus[id]; !ok {
+			return &AllocationError{Reason: "GPU " + id + " does not belong to worker " + w.id}
+		}
+	}
+	for _, id := range gpuIDs {
+		w.gpus[id].AllocationState = GPUFree
+	}
+	return nil
+}

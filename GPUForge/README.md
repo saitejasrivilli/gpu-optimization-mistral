@@ -18,11 +18,12 @@ This project's unique surface: **GPU resource modeling, GPU-aware scheduling pol
 - [Benchmark plan](docs/benchmark-plan.md)
 - [Domain model](docs/domain-model.md)
 - [Worker agent](docs/agent.md)
+- [Scheduling engine](docs/scheduling-engine.md)
 - [ADRs](docs/decisions/)
 
 ## Status
 
-Phase 2 — worker agent boundary (real NVIDIA + deterministic simulated) implemented on top of the Phase 1 domain kernel.
+Phase 3 — GPU-aware scheduling engine (FirstFit, BestFit, UtilizationAware, TopologyAware) implemented on top of the Phase 1 domain kernel and Phase 2 worker agent boundary.
 
 ## Stack
 
