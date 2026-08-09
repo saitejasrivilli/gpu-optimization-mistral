@@ -19,11 +19,12 @@ This project's unique surface: **GPU resource modeling, GPU-aware scheduling pol
 - [Domain model](docs/domain-model.md)
 - [Worker agent](docs/agent.md)
 - [Scheduling engine](docs/scheduling-engine.md)
+- [Orchestration control loop](docs/orchestration.md)
 - [ADRs](docs/decisions/)
 
 ## Status
 
-Phase 3 — GPU-aware scheduling engine (FirstFit, BestFit, UtilizationAware, TopologyAware) implemented on top of the Phase 1 domain kernel and Phase 2 worker agent boundary.
+Phase 4 — workload orchestration control loop (queue, executor abstraction, allocation, retry, cancellation, worker draining) implemented on top of the Phase 3 scheduling engine.
 
 ## Stack
 

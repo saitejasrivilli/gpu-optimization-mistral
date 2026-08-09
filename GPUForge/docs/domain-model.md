@@ -55,6 +55,10 @@ Phase 3 (the scheduler, docs/scheduling-engine.md) needed two pieces of GPU data
 
 `domain.WorkloadRequirements` (workload_requirements.go) is new: the scheduler's second input alongside `ClusterSnapshot`. See docs/scheduling-engine.md for field-by-field rationale.
 
+## Phase 4 note
+
+No domain package changes were needed for Phase 4 (the orchestration control loop, `internal/orchestrator`, see docs/orchestration.md). The existing `Worker`/`Workload`/`Allocation` transition tables and `MarkGPUsAllocated`/`MarkGPUsReleased` atomicity were sufficient as-is; cancellation of a `RETRYING` or `SCHEDULED` workload is expressed as two valid transitions in sequence rather than requiring a new direct edge — see docs/orchestration.md's cancellation section for the reasoning. The single-worker-per-`Allocation` constraint (noted in the Phase 3 section above) was inspected again for Phase 4 and still required no change.
+
 ## Deferred to later phases
 
-gRPC/HTTP transport, Prometheus metrics, Kubernetes/Terraform/Ansible integration, distributed consensus, telemetry storage, autonomous agents, preemption/eviction logic (fields exist on `WorkloadRequirements`, no behavior yet), multi-node/multi-worker allocations — none of this package's business yet.
+gRPC/HTTP transport, Prometheus metrics, Kubernetes/Terraform/Ansible integration, distributed consensus, telemetry storage, autonomous agents, preemption/eviction logic (fields exist on `WorkloadRequirements`, no behavior yet), multi-node/multi-worker allocations, automatic worker health monitoring — none of this package's business yet.
