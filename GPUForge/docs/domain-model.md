@@ -40,6 +40,10 @@ Worker.Snapshot() -> WorkerSnapshot -> ClusterSnapshot
 - A failed transition or a failed `Allocation.Release` leaves state completely unchanged (no partial mutation).
 - All aggregates (`Worker`, `Workload`, `Allocation`) are safe for concurrent use (mutex-guarded; `-race` clean).
 
+## Phase 2 addition
+
+`Worker.UpdateGPUState` and `Worker.UpdateGPUValidation` (added in Phase 2, worker.go) are the only sanctioned way to mutate a GPU's runtime/validation state after attachment — both mutex-guarded, so the agent layer (`internal/agent`, see docs/agent.md) never reaches into a `*GPU`'s fields directly. This is additive; it does not change any transition table or invariant from Phase 1.
+
 ## Deferred to later phases
 
-Scheduling algorithms, GPU/CUDA probing, gRPC/HTTP transport, Prometheus metrics, Kubernetes/Terraform/Ansible integration, distributed consensus, telemetry storage, autonomous agents — none of this package's business.
+Scheduling algorithms, gRPC/HTTP transport, Prometheus metrics, Kubernetes/Terraform/Ansible integration, distributed consensus, telemetry storage, autonomous agents — none of this package's business. GPU discovery/capability/state collection and CUDA-adjacent probing (via nvidia-smi) moved from "deferred" to "implemented" in Phase 2 — see docs/agent.md.

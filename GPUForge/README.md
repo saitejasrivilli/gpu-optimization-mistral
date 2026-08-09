@@ -8,10 +8,6 @@ Not a distributed storage system (see [Distributed Object Store] — replication
 
 This project's unique surface: **GPU resource modeling, GPU-aware scheduling policies, topology-aware placement, workload admission/queueing/preemption, worker lifecycle state machine.** Failure handling here exists only insofar as it affects scheduling/lifecycle correctness (e.g. a dead worker must stop receiving allocations) — it is not a general failure-detection research project.
 
-## Status
-
-Phase 0 — design only. No production code yet.
-
 ## Docs
 
 - [Architecture](docs/architecture.md)
@@ -20,7 +16,13 @@ Phase 0 — design only. No production code yet.
 - [Scheduler](docs/scheduler.md)
 - [Lifecycle](docs/lifecycle.md)
 - [Benchmark plan](docs/benchmark-plan.md)
+- [Domain model](docs/domain-model.md)
+- [Worker agent](docs/agent.md)
 - [ADRs](docs/decisions/)
+
+## Status
+
+Phase 2 — worker agent boundary (real NVIDIA + deterministic simulated) implemented on top of the Phase 1 domain kernel.
 
 ## Stack
 

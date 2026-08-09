@@ -173,3 +173,32 @@ func (w *Worker) GPUs() []*GPU {
 	}
 	return out
 }
+
+// UpdateGPUState applies a freshly collected runtime state sample to the
+// named GPU. This is the only sanctioned way to mutate a GPU's runtime
+// state after attachment — callers (the agent layer, in a later phase the
+// health monitor) must not reach into a *GPU's fields directly, since that
+// would bypass the worker's mutex and race with concurrent readers.
+func (w *Worker) UpdateGPUState(gpuID string, state GPUState) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	g, ok := w.gpus[gpuID]
+	if !ok {
+		return &AllocationError{Reason: "GPU " + gpuID + " does not belong to worker " + w.id}
+	}
+	g.State = state
+	return nil
+}
+
+// UpdateGPUValidation applies a validation result to the named GPU. Same
+// mutex-guarded-mutation rationale as UpdateGPUState.
+func (w *Worker) UpdateGPUValidation(gpuID string, result ValidationResult) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	g, ok := w.gpus[gpuID]
+	if !ok {
+		return &AllocationError{Reason: "GPU " + gpuID + " does not belong to worker " + w.id}
+	}
+	g.Validation = result
+	return nil
+}
